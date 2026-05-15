@@ -7,7 +7,7 @@
 
 ## 1. Purpose & audience
 
-DiTrain is an Android app for experienced strength trainees who want to propose, maintain, and track their training while keeping full freedom to adapt sessions to special needs (injury, fatigue, equipment, time). It is **methodology-agnostic** in v1: it stores raw facts and prescription/actual diffs cleanly so a multi-lens analysis layer can be added in v2 without data migration.
+DiTrain is an Android app for experienced strength trainees who want to propose, maintain, and track their training while keeping full freedom to adapt sessions to special needs (injury, fatigue, equipment, time). It is **methodology-agnostic** in v1: it stores raw facts and prescription/actual diffs cleanly so a multi-lens analysis layer can be added in v2 without data migration. Strength is the core; lightweight **cardio** logging (activity kind + duration + optional avg BPM) sits alongside in the same session model so a typical "4 strength days + 2 cardio days" routine fits naturally.
 
 **v1 is single-user, local-first, generic install.** No accounts, no backend, no network calls. Backup is manual JSON-zip export via Android's Storage Access Framework. Cloud sync (Google Drive) is explicitly out of scope for v1.
 
@@ -43,10 +43,10 @@ com.ditrain.app
 ├── model/
 │   ├── Routine.kt              // Routine, Week, SessionTemplate, ExerciseBlock,
 │   │                           //   SetPrescription (sealed), RepsTarget, LoadTarget,
-│   │                           //   LoopMode
+│   │                           //   LoopMode, CardioBlock, CardioKind
 │   ├── Exercise.kt             // Exercise, MovementPattern, MuscleGroup, Equipment
 │   ├── SessionLog.kt           // SessionLog, ExecutedExercise, LoggedSet (sealed),
-│   │                           //   MiniSet
+│   │                           //   MiniSet, CardioLog
 │   ├── Units.kt                // WeightUnit, kg<->lb conversions
 │   └── Rpe.kt                  // EffortMode, RPE/RIR value types
 ├── storage/
@@ -66,7 +66,9 @@ com.ditrain.app
 │   │   └── HomeViewController.kt
 │   ├── session/
 │   │   ├── SessionEditorController.kt
-│   │   └── SetEntryView.kt
+│   │   ├── SetEntryView.kt              // strength set row (straight + myo-rep variants)
+│   │   ├── CardioBlockView.kt           // cardio block row (duration, BPM, notes)
+│   │   └── RestTimerController.kt       // owns the inter-set rest countdown
 │   ├── dialog/
 │   │   ├── MainMenuController.kt
 │   │   ├── RoutineListDialogController.kt
@@ -117,10 +119,15 @@ All persisted entities are `@Serializable` (kotlinx-serialization). Sealed types
     val descriptionUrl: String?,     // e.g. ExRx page; null for user-created
     val custom: Boolean = false,
     val parentId: String? = null,    // when this is a fork of a bundled exercise
+    val deleted: Boolean = false,    // soft delete: hidden from pickers, name still resolves
+                                     // for historical session-log rendering. Only meaningful
+                                     // for custom exercises.
 )
 ```
 
 Bundled catalog lives at `app/src/main/assets/exercises.json` and ships ~150 entries. User-added customs live at `filesDir/custom_exercises.json` and merge into the in-memory `ExerciseCatalog` at load time.
+
+**Soft delete:** the user-facing "Delete" action on a custom exercise sets `deleted = true` and rewrites `custom_exercises.json`. The entry stays in the catalog so historical `SessionLog`s and routines that reference its id continue to render its name and metadata. Exercise pickers and the routine catalog filter out `deleted == true` by default. Settings has a **Show deleted exercises** toggle; from that view, the user can **Restore** (clear the flag) or **Hard delete** (remove entirely — only available when no routine or session log references the id). Bundled exercises cannot be deleted; if a future bundled catalog drops an exercise, the synthesized-unknown fallback in §7 covers it.
 
 ### 4.2 `Routine` (template — fixed or mesocycle, unified)
 
@@ -144,8 +151,21 @@ Bundled catalog lives at `app/src/main/assets/exercises.json` and ships ~150 ent
 
 @Serializable data class SessionTemplate(
     val id: String,                        // stable within the routine, e.g. "push-a"
-    val name: String,                      // "Push A"
-    val blocks: List<ExerciseBlock>,
+    val name: String,                      // "Push A" or "Easy Run"
+    val blocks: List<ExerciseBlock> = emptyList(),       // strength blocks
+    val cardioBlocks: List<CardioBlock> = emptyList(),   // cardio blocks
+    // A session may have only strength, only cardio, or both. At least one of
+    // blocks/cardioBlocks must be non-empty (enforced at import).
+)
+
+@Serializable data class CardioBlock(
+    val activityKind: CardioKind,          // RUNNING, SWIMMING, CYCLING, ROWING, WALKING,
+                                           // ELLIPTICAL, HIKING, OTHER
+    val description: String? = null,       // free-text; required when kind == OTHER
+                                           // (e.g. "30 min stair-master", "interval pyramid")
+    val targetDurationMin: Int? = null,    // null = open-ended
+    val targetAvgBpm: Int? = null,         // optional intensity target
+    val notes: String? = null,
 )
 
 @Serializable data class ExerciseBlock(
@@ -201,8 +221,20 @@ Persisted at `filesDir/routines/{routine.id}.json` — one routine per file.
     val performedDate: LocalDateIso,       // may differ from scheduledDate (reschedule)
     val startedAt: InstantIso,
     val completedAt: InstantIso?,          // null while in-progress
-    val executed: List<ExecutedExercise>,
+    val executed: List<ExecutedExercise> = emptyList(),  // strength side
+    val cardioExecuted: List<CardioLog> = emptyList(),   // cardio side
     val notes: String? = null,
+)
+
+@Serializable data class CardioLog(
+    val activityKind: CardioKind,          // resolved from prescription, or chosen ad-hoc
+    val substitutedFromKind: CardioKind? = null,  // set if user swapped kind for this session
+    val description: String? = null,
+    val durationMin: Int,                  // actual duration performed
+    val avgBpm: Int? = null,               // optional; entered manually from a watch reading
+    val performedAt: InstantIso,
+    val notes: String? = null,
+    val skipped: Boolean = false,          // skipped prescribed cardio block (sets durationMin=0)
 )
 
 @Serializable data class ExecutedExercise(
@@ -279,6 +311,8 @@ Rationale for single-file-plus-rollover over monthly partitioning: data volume i
     val effortMode: EffortMode = EffortMode.RPE,      // RPE or RIR in the UI
     val barWeightKg: Double = 20.0,
     val theme: ThemeMode = ThemeMode.SYSTEM,
+    val restTimerHaptic: Boolean = true,              // vibrate when rest timer hits zero
+    val showDeletedExercises: Boolean = false,        // unhide soft-deleted custom exercises
 )
 ```
 
@@ -348,9 +382,11 @@ Vertical scrollable column. No bottom nav, no toolbar.
 └───────────────────────────────────────┘
 ```
 
-- Swipe horizontally or `◄ ►` to switch exercise; small dot strip top-of-screen shows progress.
+- Swipe horizontally or `◄ ►` to switch block; small dot strip top-of-screen shows progress through all blocks in the session (strength + cardio).
 - `SetEntryView` has two layouts: **straight** (weight, reps, RPE/RIR, optional note, Log) and **myo-rep** (activation row, then one mini-set row at a time appearing as the previous is logged; "End cluster" button finishes early).
-- "Finish session" button appears in the bottom strip once every prescribed exercise is either fully logged or marked skipped.
+- `CardioBlockView` (for sessions with cardio blocks) shows: prescription header ("Running · target 30 min · target avg HR 140"), then editable fields for **actual duration** (mm, required), **avg BPM** (optional), **notes**, and a single **Log** button. No sets, no rest timer interaction.
+- Bottom strip behavior depends on the active block: rest timer visible & active on strength blocks, hidden on cardio blocks (cardio doesn't drive the inter-set timer). Detailed in §6.6.
+- "Finish session" button appears in the bottom strip once every prescribed block (strength + cardio) is either fully logged or marked skipped.
 
 ### 5.3 Dialogs
 
@@ -387,7 +423,7 @@ Icons: Android system drawables (`@android:drawable/ic_menu_*`) or unicode glyph
 If no routines exist on launch:
 1. Brief welcome card on Home explaining DiTrain.
 2. Two visible CTAs: "Try an example routine" (loads from bundled assets) and "Import your own (JSON)".
-3. Bundled examples (in `app/src/main/assets/example_routines/`): 3–4 routines covering different shapes — a 4-week mesocycle, an A/B/A/B fixed template, a 5/3/1-style block, a higher-frequency hypertrophy split. They double as schema documentation.
+3. Bundled examples (in `app/src/main/assets/example_routines/`): 4–5 routines covering different shapes — a 4-week mesocycle, an A/B/A/B fixed template, a 5/3/1-style block, a higher-frequency hypertrophy split, and a **4-day strength + 2-day cardio hybrid** routine that demonstrates mixed strength/cardio scheduling. They double as schema documentation.
 
 ## 6. Key flows
 
@@ -397,9 +433,10 @@ If no routines exist on launch:
 2. Three entry sub-tabs: Paste JSON, Pick file (SAF `ACTION_OPEN_DOCUMENT`, mime `application/json` / `*/*`), Bundled examples.
 3. `RoutineImporter.parse(json)`:
    - Deserialize. Catch `SerializationException` → show "Couldn't parse: <line/col + message>".
-   - Validate every `ExerciseBlock.exerciseId` resolves in `ExerciseCatalog`. Missing → block import, list missing IDs, offer "Open exercise picker to map each missing ID" or Cancel.
+   - Validate every `ExerciseBlock.exerciseId` resolves in `ExerciseCatalog` (deleted-flag is ignored — imports may reference soft-deleted exercises). Missing → block import, list missing IDs, offer "Open exercise picker to map each missing ID" or Cancel.
    - Validate `schemaVersion == 1`.
-   - Validate structure: at least one week with at least one session with at least one block.
+   - Validate structure: at least one week with at least one session, and every session has at least one strength block OR one cardio block (mixed sessions OK).
+   - For each `CardioBlock` with `activityKind = OTHER`, require non-empty `description`.
 4. Show `RoutinePreview` with **Save** and **Save & activate**.
 5. Save writes `filesDir/routines/{id}.json`. Conflict on existing id → Replace / Save as copy / Cancel.
 
@@ -420,26 +457,34 @@ If no routines exist on launch:
 **Start:**
 1. Home → **Start session** picks the earliest `ScheduledSession` with `date <= today` and `sessionLogId == null`. If today is empty, the button is hidden; user must pick via Reschedule.
 2. `SessionEditorController` creates a `SessionLog` in memory: copies the template, sets `startedAt = now`, `scheduledDate` from the `ScheduledSession`, `performedDate = today`. Sets `ScheduledSession.sessionLogId` immediately and persists `state.json` so a crash mid-session can resume.
-3. Each prescribed `ExerciseBlock` becomes an `ExecutedExercise` with empty `sets`.
+3. Each prescribed `ExerciseBlock` becomes an `ExecutedExercise` with empty `sets`. Each prescribed `CardioBlock` becomes a placeholder `CardioLog` slot (not yet appended to `cardioExecuted` — only appended on Log).
+4. Pager order: strength blocks first (in prescribed order), then cardio blocks (in prescribed order). A user can swipe-jump in any direction; nothing enforces sequential completion.
 
-**During:**
-4. Active set row inputs default from prescription.
-5. **Load resolution** at row creation:
+**During — strength blocks:**
+5. Active set row inputs default from prescription.
+6. **Load resolution** at row creation:
    - `ABSOLUTE_KG(x)` → fill `x` (converted for display).
    - `PCT_1RM(p)` → fetch latest e1RM for this exercise; fill `p × e1RM`, rounded to nearest 0.5 kg or 1 lb depending on display unit.
    - `RPE_TARGET(r)` → leave weight empty, show RPE target as a hint.
    - `RELATIVE_TO_LAST(δ)` → look up the same exercise from the most recent completed `SessionLog`; fill `lastTopWeight + δ`. If no prior session, leave empty + hint.
    - `OPEN` → leave empty.
-6. **Log a set**: validate `weight > 0` and `reps > 0`, append to `LoggedSet` list. Auto-start rest timer seeded from the next set's prescribed `rest`; the logged `restSec` of the just-logged set records actual elapsed rest since the previous logged set. Persist the `SessionLog` to `sessions.json` on every log (whole-file rewrite; triggers rollover if the threshold is crossed).
-7. **Myo-rep flow**: active row starts as activation set with `activationReps` prescribed. On Log, the row collapses and a mini-set row appears. User logs each mini-set. **End cluster** button or hitting `miniSetCount` collapses the whole `MyoRep` into a single logged entry.
-8. **One-time exercise sub**: tap exercise name → ExercisePicker → "Substitute (today only)". Updates `ExecutedExercise.exerciseId`, sets `substitutedFromId`. Prescribed sets stay (user decides whether to follow them).
-9. **Persistent sub**: ExercisePicker → "Substitute (rest of program)". Mutates the active `Routine` (rewrites `{id}.json`); all future weeks' `ExerciseBlock`s referencing `substitutedFromId` get their `exerciseId` changed. A sidecar `routine.history.json` records each persistent edit (timestamp, from, to, scope).
-10. **Skip exercise**: confirm → `ExecutedExercise.skipped = true`, sets list stays empty.
-11. **Add ad-hoc exercise**: ExercisePicker → "Add to today only". Appends a new `ExecutedExercise` with no prescription parent. User logs sets freely.
+7. **Log a set**: validate `weight > 0` and `reps > 0`, append to `LoggedSet` list. Trigger the rest timer per §6.6. Persist the `SessionLog` to `sessions.json` on every log (whole-file rewrite; triggers rollover if the threshold is crossed).
+8. **Myo-rep flow**: active row starts as activation set with `activationReps` prescribed. On Log, the row collapses and a mini-set row appears. User logs each mini-set. **End cluster** button or hitting `miniSetCount` collapses the whole `MyoRep` into a single logged entry.
+9. **One-time exercise sub**: tap exercise name → ExercisePicker → "Substitute (today only)". Updates `ExecutedExercise.exerciseId`, sets `substitutedFromId`. Prescribed sets stay (user decides whether to follow them).
+10. **Persistent sub**: ExercisePicker → "Substitute (rest of program)". Mutates the active `Routine` (rewrites `{id}.json`); all future weeks' `ExerciseBlock`s referencing `substitutedFromId` get their `exerciseId` changed. A sidecar `routine.history.json` records each persistent edit (timestamp, from, to, scope).
+11. **Skip exercise**: confirm → `ExecutedExercise.skipped = true`, sets list stays empty.
+12. **Add ad-hoc exercise**: ExercisePicker → "Add to today only". Appends a new `ExecutedExercise` with no prescription parent. User logs sets freely.
+
+**During — cardio blocks:**
+13. `CardioBlockView` shows the prescription and editable fields for actual duration (mm), avg BPM (optional), notes. The rest timer is hidden while a cardio block is the active page.
+14. **Log cardio**: validate `durationMin > 0`, append a `CardioLog` to `cardioExecuted` with `performedAt = now`. Persist `sessions.json`. Cardio blocks do not trigger the rest timer.
+15. **One-time activity sub**: tap activity kind in the cardio header → activity picker (a small list of `CardioKind` values + description field). Sets `substitutedFromKind` on the `CardioLog`.
+16. **Skip cardio**: confirm → append a `CardioLog` with `skipped = true`, `durationMin = 0`.
+17. **Add ad-hoc cardio**: from the "Add block" affordance at the bottom of the pager, pick "Cardio…", choose kind + duration. Appends a `CardioLog` with no prescription parent.
 
 **Finish:**
-12. **✕ Abort**: AbortConfirm → Save in-progress (partial `SessionLog` persists, shown as "Resume session" on Home) or Discard (delete `SessionLog`, clear `ScheduledSession.sessionLogId`).
-13. **Finish session**: when all prescribed exercises are fully logged or marked skipped, a **Finish** button appears in the bottom strip. On tap, set `completedAt = now`, persist. Advance the cursor.
+18. **✕ Abort**: AbortConfirm → Save in-progress (partial `SessionLog` persists, shown as "Resume session" on Home) or Discard (delete `SessionLog`, clear `ScheduledSession.sessionLogId`).
+19. **Finish session**: when every prescribed block (strength + cardio) is fully logged or marked skipped, a **Finish** button appears in the bottom strip. On tap, set `completedAt = now`, persist. Advance the cursor.
 
 Mid-session reschedule is disallowed — must finish or abort first.
 
@@ -465,6 +510,42 @@ Mid-session reschedule is disallowed — must finish or abort first.
 3. Summary: "N routines, M months of logs, K custom exercises, exported on <date> from app v<x>".
 4. **Conflict mode**: radio — **Replace everything** (default) or **Merge** (routines union by id with import winning; custom exercises union by id with import winning; logs concatenate by month, duplicate `SessionLog.id` skipped; state.json from import wins).
 5. Confirm → snapshot `filesDir` to `cacheDir/import-rollback/`, apply file-by-file. Any failure restores from snapshot. Clean staging on success.
+
+### 6.6 Rest timer
+
+Owned by `RestTimerController`, instantiated by `SessionEditorController` and shown in the bottom strip of the session editor whenever a strength block is the active page.
+
+**State.** The controller holds:
+- `targetSec: Int?` — the prescribed duration (0 means "no countdown configured"; null means "no timer running")
+- `startedAtElapsed: Long?` — value of `SystemClock.elapsedRealtime()` when the timer started; null when idle
+- `pausedRemaining: Long?` — when paused, the remaining millis at pause time
+- `lastSetCompletedAtElapsed: Long?` — used to compute the `restSec` captured into the next logged set
+
+**Trigger (start).** Auto-starts the moment a `LoggedSet.Straight` or `LoggedSet.MyoRep` is logged.
+- For a straight set: `targetSec` = `rest` of the **next** set in the same `ExerciseBlock`. If this was the last set of the block, fall back to the first set's `rest` of the next strength block in the session. If neither has a value or there is no next strength block, `targetSec = 0` and only the count-up display is shown.
+- For a myo-rep activation set: `targetSec` = first mini-set's prescribed rest (default 15 sec from `miniSetRestSec`).
+- For each logged mini-set inside an active myo-rep cluster: `targetSec = miniSetRestSec`.
+- For the closing entry of a myo-rep cluster: same fallback chain as a straight set.
+
+**Trigger (capture).** When the **next** set is logged, the controller computes `actualRestSec = (SystemClock.elapsedRealtime() - lastSetCompletedAtElapsed) / 1000` and writes it into the freshly-logged set's `restSec` field. If the user pauses or resets the timer manually, `restSec` still uses the raw elapsed time from `lastSetCompletedAtElapsed` (pausing only affects the display countdown, not the captured fact). For the very first logged set of a session, `restSec = null`.
+
+**Display.** Bottom strip, single line: `⏱ Rest: m:ss / m:ss` while counting down; `⏱ Rest: +m:ss over` once past zero (does not stop on its own). Color shifts amber → green at the target value to make "you're done resting" obvious. If `targetSec == 0`, only the count-up form is shown.
+
+**Past-zero behavior.** Timer continues counting up indefinitely (until the next set is logged). No automatic stop — the user controls when to lift.
+
+**Audible/haptic cue at zero.** When the count crosses `targetSec` (and `targetSec > 0`), fire a short vibration if `Settings.restTimerHaptic == true`. Uses `VibratorManager` (API 31+) or `Vibrator` legacy API as a fallback. Single 200 ms tick — no looping, no sound. Manifest adds `<uses-permission android:name="android.permission.VIBRATE" />` (normal permission, no runtime prompt).
+
+**Controls (tap targets on the timer area).**
+- Tap the time → pause / resume
+- Long-press → reset to `targetSec`
+- `+30s` / `-30s` chips on either side adjust `targetSec` for the current rest only (does not persist back into the prescription)
+- `✕` on the right dismisses the timer for the current rest (the count-up keeps tracking in the background; the bottom strip reverts to just nav arrows). Re-opens automatically on the next logged set.
+
+**Behavior on page swipe.** Switching the visible block does not stop the timer; it keeps running. The display stays visible while a strength block is active; when the visible page is a cardio block, the bottom strip hides the rest-timer chrome but the underlying counter continues so a subsequent strength block resumes correctly.
+
+**Behavior on app backgrounded / process death.** Timer is rebuilt from `lastSetCompletedAtElapsed` (stored in the in-memory session controller; not persisted to disk since `SystemClock.elapsedRealtime()` is monotonic from boot). If the OS kills the process and the user reopens before another set, the timer resets — but the `restSec` actually captured on the next logged set still reflects the wall-clock gap because we re-derive it from the previous logged set's `performedAt` (`(now - lastLoggedSet.performedAt).inSeconds`). This single source of truth — "elapsed since previous logged set's `performedAt`" — is what `restSec` always records; the on-screen timer is a UX overlay on top.
+
+**No notification.** Rest timer alerting outside the app (notification, lock screen) is out of scope for v1.
 
 ## 7. Error handling
 
@@ -495,7 +576,10 @@ Mid-session reschedule is disallowed — must finish or abort first.
 - **Two routines active simultaneously:** not supported. `AppState.activeRoutineId` is single-valued.
 - **Resume mid-session across restarts:** `SessionLog.completedAt == null` && `ScheduledSession.sessionLogId != null` → Home shows "Resume session".
 - **Routine deleted while active:** confirm → remove from `routines/`, clear `activeRoutineId`, clear future `ScheduledSessions` for that routine. Past `SessionLog`s keep `routineId` as orphan string — history renders "(routine deleted)".
-- **Custom exercise referenced by a routine, then deleted:** prompt "X routines and Y sessions reference this — delete anyway?" If confirmed, the exercise becomes an unknown ID handled per schema-drift rules.
+- **Custom exercise "delete" (soft):** sets `deleted = true` on the `Exercise`. The entry stays in `custom_exercises.json` so historical session-log and routine references continue to render the original name. The exercise is hidden from pickers; routines that already reference it keep working. Settings → Show deleted exercises exposes Restore / Hard delete.
+- **Hard delete of a custom exercise:** only offered when zero routines and zero session logs reference the id. Otherwise the action is disabled with a tooltip explaining what's still referencing it.
+- **Cardio-only session:** valid — `blocks.isEmpty() && cardioBlocks.isNotEmpty()`. Rest timer never appears. Finish-session detection works on the cardio side alone.
+- **Mixed session, all strength first then cardio:** pager order is strength → cardio (§6.3 step 4). Rest timer carries across the strength-cardio transition only in the background; UI chrome hides on cardio pages.
 - **Backup on fresh install** = full restore. Backup with existing data = the conflict-mode choice governs.
 
 ## 9. Testing
@@ -503,12 +587,14 @@ Mid-session reschedule is disallowed — must finish or abort first.
 JUnit only (matches DiRead's test setup). No Espresso in v1.
 
 **`model/`:**
-- `RoutineSerializationTest`: round-trip every sealed subtype of `SetPrescription`.
-- `SessionLogSerializationTest`: round-trip `LoggedSet`, including myo-rep with empty/partial mini-sets.
+- `RoutineSerializationTest`: round-trip every sealed subtype of `SetPrescription`; round-trip a session with strength-only, cardio-only, and mixed blocks; round-trip every `CardioKind` value (including `OTHER` with description).
+- `SessionLogSerializationTest`: round-trip `LoggedSet`, including myo-rep with empty/partial mini-sets; round-trip a `CardioLog` with and without `avgBpm`; round-trip a `SessionLog` whose `executed` and `cardioExecuted` are both non-empty.
 - `LoopMode == REPEAT` with one week round-trips identically to a fixed template.
+- `Exercise` round-trips with `deleted = true` and the flag survives.
 
 **`storage/`** (use a `tempDirectoryRule()`-style helper):
 - `RoutineRepositoryTest`: save → load → equals; overwrite; delete; list.
+- `ExerciseCatalogTest`: bundled-only load; merge with customs; soft-delete a custom flips the `deleted` flag and the in-memory catalog hides it from default iteration but still resolves by id; restore clears the flag; hard-delete refuses when references exist (simulated by a mock reference index) and succeeds when none do.
 - `SessionLogRepositoryTest`: write/read/update/delete round-trip; sorted-by-`performedDate` invariant holds across writes. **Rollover**: writes that push `sessions.json` past 1 MB atomically produce `archive/sessions-{firstDate}_{lastDate}.json` with correct date range; `sessions.json` is empty afterward; the next write succeeds and is preserved. **Lazy archive load**: a date-range query that doesn't overlap an archive does not open it; one that does, opens and merges. **Merged ordering**: queries spanning live + archive return one chronological list.
 - `BackupArchiveTest`: export → import in a fresh dir produces identical `filesDir` contents. Replace vs. merge modes. Corrupt zip rejected cleanly.
 - `AppStateTest`: schedule layout for a 4-week mesocycle × 3 weekday pattern produces exactly 4×3 entries on correct weekdays. REPEAT mode produces 8 weeks ahead. Window-extension triggers at ≤ 2 weeks remaining.
@@ -518,7 +604,18 @@ JUnit only (matches DiRead's test setup). No Espresso in v1.
 
 **`progression/`:**
 - `E1rmTest`: Epley-RPE formula matches known reference values within 0.1 kg (e.g., 100 kg × 5 @ RPE 8 → ~123 kg). Empty input → null.
-- `PrDetectionTest`: best e1RM, best weight, best reps-at-load correctly detected across a synthetic log. Ties broken by earliest date.
+- `PrDetectionTest`: best e1RM, best weight, best reps-at-load correctly detected across a synthetic log. Ties broken by earliest date. Cardio logs and skipped sets are ignored.
+
+**`ui/session/`** (controller-only, no `Activity`):
+- `RestTimerControllerTest` (using a fake `Clock` that exposes `elapsedRealtime()`):
+  - Auto-starts on a logged set with `targetSec = next set's prescribed rest`.
+  - Falls back to the next block's first-set rest when the current is the last set.
+  - `targetSec = 0` when neither has a value; display switches to count-up only.
+  - Capture: `restSec` of a logged set equals `(now - previousLoggedSetPerformedAt).inSeconds`, independent of pause/reset state.
+  - First logged set of a session captures `restSec = null`.
+  - Pause then resume preserves the underlying capture clock.
+  - +30 / −30 adjustments shift display only, not capture.
+  - Crossing `targetSec` flips the color flag once; subsequent ticks do not re-fire it.
 
 **Manual / device testing:**
 - Each dialog renders and dismisses in portrait, day and night themes.
@@ -533,7 +630,7 @@ JUnit only (matches DiRead's test setup). No Espresso in v1.
 - Mirror DiRead's `build.gradle.kts` (signing config from `keystore.properties`, `assembleDebug` / `bundleRelease`).
 - Add `kotlinx-serialization-json` and apply the Kotlin serialization Gradle plugin.
 - `versionCode 1`, `versionName "0.1.0"`.
-- No new manifest permissions. Storage uses SAF (no `READ/WRITE_EXTERNAL_STORAGE`). No network.
+- Manifest permissions: `android.permission.VIBRATE` only (normal, no runtime prompt — for the rest-timer haptic). Storage uses SAF (no `READ/WRITE_EXTERNAL_STORAGE`). No network.
 
 ## 11. Forward compatibility notes
 
@@ -567,7 +664,8 @@ This section defines every term DiTrain surfaces in its UI or routine JSON schem
 - **Top set** — typically the heaviest set of an exercise on a given day. Surfaced in DiTrain as "best e1RM" / "best load" entries in the PR list.
 - **AMRAP (As Many Reps As Possible)** — a prescription instructing the user to perform as many reps as they can with the prescribed weight. Often used for top sets.
 - **Tempo** — speed of each rep, written as `eccentric-pause-concentric` in seconds (e.g., `3-1-1` = 3 sec down, 1 sec pause, 1 sec up).
-- **Rest** — recovery time between sets, in seconds. May be prescribed by the routine or chosen freely.
+- **Rest** — recovery time between sets, in seconds. May be prescribed by the routine or chosen freely. Tracked actually-elapsed-since-previous-set in each logged set's `restSec`. See *Rest timer*.
+- **Rest timer** — DiTrain's in-screen inter-set countdown. Auto-starts when a set is logged, seeded from the next set's prescribed rest. Continues counting up past zero with a color shift and optional haptic tick. Captured `restSec` is always derived from "elapsed since the previous logged set," independent of pause/reset interactions. Detailed in §6.6.
 
 ### 12.3 Myo-reps
 
@@ -575,7 +673,16 @@ This section defines every term DiTrain surfaces in its UI or routine JSON schem
 - **Activation set** — the first set in a myo-rep cluster, typically taken to a high effort level (e.g., RPE 9 at 15 reps).
 - **Mini-set** — each follow-up set in a myo-rep cluster, short and small (e.g., 5 reps with 15 sec rest), continuing until target count or stop threshold is hit.
 
-### 12.4 Effort and load
+### 12.4 Cardio
+
+- **Cardio session / cardio block** — a prescribed bout of cardiovascular activity, sitting alongside (or replacing) the strength blocks in a session. DiTrain tracks cardio with three core fields: activity kind, actual duration, and (optional) average heart rate.
+- **Activity kind** — one of `RUNNING`, `SWIMMING`, `CYCLING`, `ROWING`, `WALKING`, `ELLIPTICAL`, `HIKING`, `OTHER` (the last requires a free-text description).
+- **Duration** — actual minutes performed; the only required field on a cardio log.
+- **Avg BPM (heart rate)** — average heart rate during the bout, in beats per minute. Optional; intended for users with a watch or chest strap who read it off after the session.
+- **Target duration / target avg BPM** — optional prescription fields on a `CardioBlock`. Surfaced in the cardio block header as a hint; not enforced.
+- **Mixed session** — a session with both strength and cardio blocks. Strength blocks render first in the pager; rest timer is hidden on cardio pages.
+
+### 12.5 Effort and load
 
 - **RPE (Rate of Perceived Exertion)** — a 1–10 scale (with half-points) for self-rated set difficulty. 10 = absolute max, 8 = ~2 reps in reserve. DiTrain accepts half-points (e.g., 8.5).
 - **RIR (Reps In Reserve)** — integer 0–5 estimating how many more reps could have been completed before failure. Equivalent to RPE for most users: RIR ≈ 10 − RPE.
@@ -585,7 +692,7 @@ This section defines every term DiTrain surfaces in its UI or routine JSON schem
 - **Bar weight** — the empty weight of the bar used for barbell exercises. Default 20 kg, configurable in Settings; affects load-suggestion display.
 - **PR (Personal Record)** — best historical performance on an exercise. DiTrain tracks three PR types: best e1RM, best weight (for any reps), and best reps at a given weight.
 
-### 12.5 Movement patterns
+### 12.6 Movement patterns
 
 - **Squat** — knee-dominant, vertical-torso lower-body lift.
 - **Hinge** — hip-dominant lower-body lift, e.g., deadlift, RDL, good morning.
@@ -598,31 +705,33 @@ This section defines every term DiTrain surfaces in its UI or routine JSON schem
 - **Core** — direct trunk work, e.g., plank, hanging leg raise.
 - **Isolation** — single-joint movement, e.g., biceps curl, lateral raise.
 
-### 12.6 Splits (informal — referenced in bundled examples, not stored in DiTrain's data model)
+### 12.7 Splits (informal — referenced in bundled examples, not stored in DiTrain's data model)
 
 - **Full body** — every session trains the whole body. High frequency per muscle.
 - **Upper/Lower** — alternating upper- and lower-body sessions. Typical 4-day-per-week split.
 - **Push/Pull/Legs (PPL)** — three session types repeating: pushing muscles, pulling muscles, lower body. Typical 6-day split (PPL twice).
 - **Body part split** ("bro split") — one body part per session. Lower frequency per muscle.
 
-### 12.7 Muscle groups
+### 12.8 Muscle groups
 
 DiTrain's catalog tags each exercise with primary and secondary muscles. Categories: **quads, hamstrings, glutes, chest, upper back, lats, front delt, side delt, rear delt, biceps, triceps, forearms, abs, obliques, lower back, calves, traps, neck, adductors, abductors**.
 
-### 12.8 Equipment
+### 12.9 Equipment
 
 Categories: **barbell, dumbbell, machine, cable, bodyweight, band, other**. Exercises can list multiple (e.g., barbell + cable for landmine variants).
 
-### 12.9 Adaptation actions (DiTrain-specific)
+### 12.10 Adaptation actions (DiTrain-specific)
 
-- **Substitute (today only)** — replace a prescribed exercise with another from the catalog for this session only. The original prescription stays in the routine.
+- **Substitute (today only)** — replace a prescribed exercise (or cardio activity kind) with another for this session only. The original prescription stays in the routine.
 - **Substitute (rest of program)** — replace an exercise in the routine itself, going forward. Edits the routine file; a sidecar `routine.history.json` records the change for auditability.
-- **Skip exercise** — mark a prescribed exercise as not performed in this session, with optional reason note.
-- **Ad-hoc exercise** — an exercise added during the session that wasn't in the prescription. Logged but not attached to any prescription parent.
+- **Skip exercise / skip cardio** — mark a prescribed block as not performed in this session, with optional reason note. For strength: `ExecutedExercise.skipped = true`. For cardio: `CardioLog.skipped = true` with `durationMin = 0`.
+- **Ad-hoc exercise / ad-hoc cardio** — a block added during the session that wasn't in the prescription. Logged but not attached to any prescription parent.
+- **Soft delete (exercise)** — set `Exercise.deleted = true` on a custom exercise. The entry stays in the catalog so historical references render normally; the exercise is hidden from pickers. Reversible via Settings → Show deleted exercises → Restore.
+- **Hard delete (exercise)** — fully remove an entry from `custom_exercises.json`. Only available via the same Settings path, and only when zero routines and zero session logs reference the id.
 - **Reschedule** — move a `ScheduledSession` from its planned date to another date. Does not cascade to following sessions.
 - **Missed session** — a `ScheduledSession` whose date has passed without being started or logged. Surfaces grouped at the top of the calendar dialog for the user to remove or reschedule.
 
-### 12.10 Storage / backup
+### 12.11 Storage / backup
 
 - **Scheduled session** — a calendar entry: routine + week + session-template + date. Created when a routine is activated.
 - **Session log** — the persisted record of an actual training session, including all logged sets, executed exercises, performed date, and notes.
@@ -630,7 +739,7 @@ Categories: **barbell, dumbbell, machine, cable, bodyweight, band, other**. Exer
 - **Backup archive** — a `.zip` produced by DiTrain's Export action, containing all routines, session logs, custom exercises, and app state, plus a `manifest.json`.
 - **Rollover** — automatic archival of `sessions.json` to `logs/archive/sessions-{firstDate}_{lastDate}.json` when the live file exceeds 1 MB. Transparent to the user.
 
-### 12.11 Out of scope for v1 (defined here for forward reference)
+### 12.12 Out of scope for v1 (defined here for forward reference)
 
 - **Volume landmarks (MEV/MAV/MRV)** — Renaissance Periodization framework for weekly hard sets per muscle. *v2 analysis layer.*
 - **Autoregulation** — adjusting today's load/volume based on last session's RPE or recovery readiness. *v2.*
