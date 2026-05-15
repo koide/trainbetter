@@ -82,7 +82,12 @@ class SessionLogRepository(
         val ts = System.currentTimeMillis()
         val renamed = File(logsDir, "sessions.corrupt.${ts}.json")
         AtomicWrite.writeText(renamed, raw)
-        liveFile.delete()
+        if (!liveFile.delete()) {
+            // delete() failed (rare on Android internal storage, possible on some
+            // SD-card mounts). Rename to a distinct name so subsequent readLive()
+            // calls won't re-quarantine the same content on every load.
+            liveFile.renameTo(File(logsDir, "sessions.unremovable.${ts}.json"))
+        }
     }
 
     private fun writeLive(list: List<SessionLog>) {
