@@ -51,7 +51,7 @@ com.ditrain.app
 │   └── Rpe.kt                  // EffortMode, RPE/RIR value types
 ├── storage/
 │   ├── RoutineRepository.kt    // one JSON per routine in filesDir/routines/
-│   ├── SessionLogRepository.kt // monthly JSON files: filesDir/logs/sessions-YYYY-MM.json
+│   ├── SessionLogRepository.kt // single filesDir/logs/sessions.json + archive rollover
 │   ├── ExerciseCatalog.kt      // bundled assets/exercises.json + filesDir/custom_exercises.json
 │   ├── AppState.kt             // filesDir/state.json (active routine, scheduled sessions, settings)
 │   └── BackupArchive.kt        // zip/unzip export bundle
@@ -82,7 +82,8 @@ com.ditrain.app
 │   │   ├── SettingsDialogController.kt
 │   │   ├── BackupDialogController.kt
 │   │   ├── AbortConfirmDialogController.kt
-│   │   └── AboutDialogController.kt
+│   │   ├── AboutDialogController.kt
+│   │   └── GlossaryDialogController.kt
 │   └── view/
 │       ├── E1rmChartView.kt
 │       └── CalendarHeatView.kt
@@ -243,7 +244,13 @@ Persisted at `filesDir/routines/{routine.id}.json` — one routine per file.
 @Serializable data class MiniSet(val reps: Int, val rpe: Double? = null)
 ```
 
-Persisted monthly at `filesDir/logs/sessions-YYYY-MM.json`, keyed by `performedDate`'s month. The file contains a JSON array of `SessionLog`.
+**Storage:** all session logs persist to a single JSON array at `filesDir/logs/sessions.json`, sorted by `performedDate` ascending.
+
+**Rollover:** when `sessions.json` exceeds **1 MB** on any write, the file is atomically renamed to `filesDir/logs/archive/sessions-{firstDate}_{lastDate}.json` (using the min/max `performedDate` in the file) and a fresh empty `sessions.json` starts the next session log. The threshold is generous — ~200 typical sessions, roughly a year of heavy training — so rollover is rare. The threshold is a single constant in `SessionLogRepository` (`val ROLLOVER_BYTES = 1L shl 20`) and trivially adjustable later.
+
+**Reads:** the repository loads `sessions.json` eagerly on first access. Archive files are loaded lazily and only when a query's date range overlaps an archive's filename-encoded range. The repository caches an in-memory index of `archiveFile -> dateRange` on startup. The active sorted list returned to callers is a merged view; archive lookup is transparent.
+
+Rationale for single-file-plus-rollover over monthly partitioning: data volume is small enough that partitioning by date yields no real benefit, and "one file, occasionally rolled" is simpler to reason about, to back up by hand, and to debug.
 
 **Internal weight unit is always kg.** UI converts at the edge. Conversion uses `1 lb = 0.45359237 kg` exactly. Display rounds to 0.5 kg or 1 lb increments; internal math never rounds.
 
@@ -284,9 +291,10 @@ Manual export bundles, into a single `.zip`:
 ```
 exercises_custom.json
 routines/*.json
-logs/sessions-YYYY-MM.json
+logs/sessions.json
+logs/archive/sessions-*.json     // only present if rollover has occurred
 state.json
-manifest.json                // { schemaVersion, exportedAt, appVersion }
+manifest.json                    // { schemaVersion, exportedAt, appVersion }
 ```
 
 Import unzips into a staging dir, validates `manifest.schemaVersion`, then applies per a user-chosen conflict mode (see 6.5).
@@ -348,7 +356,7 @@ Vertical scrollable column. No bottom nav, no toolbar.
 
 | Dialog | Triggered from | Purpose |
 |---|---|---|
-| **MainMenu** | `⋮` overflow | Routines, Import routine, Export/Import backup, Settings, About |
+| **MainMenu** | `⋮` overflow | Routines, Import routine, Export/Import backup, Settings, Glossary, About |
 | **RoutineList** | MainMenu → Routines | Per-row: activate, view, duplicate, delete |
 | **RoutineImport** | MainMenu → Import routine | Paste JSON · Pick file (SAF) · Bundled examples |
 | **RoutinePreview** | RoutineList → view, RoutineImport | Read-only structural view; **Save** and **Save & activate** |
@@ -363,6 +371,7 @@ Vertical scrollable column. No bottom nav, no toolbar.
 | **Backup** | MainMenu → Export/Import backup | Export now (SAF), Import from file (SAF), replace-vs-merge |
 | **AbortConfirm** | Session editor → ✕ | Save in-progress / Discard / Cancel |
 | **About** | MainMenu → About | Version, source link, license, brief usage tips, e1RM formula doc |
+| **Glossary** | MainMenu → Glossary | Searchable list of all DiTrain terms with definitions, sourced from bundled `assets/glossary.json`. Same content as §12 of this spec. |
 
 ### 5.4 Styling
 
@@ -421,7 +430,7 @@ If no routines exist on launch:
    - `RPE_TARGET(r)` → leave weight empty, show RPE target as a hint.
    - `RELATIVE_TO_LAST(δ)` → look up the same exercise from the most recent completed `SessionLog`; fill `lastTopWeight + δ`. If no prior session, leave empty + hint.
    - `OPEN` → leave empty.
-6. **Log a set**: validate `weight > 0` and `reps > 0`, append to `LoggedSet` list. Auto-start rest timer using the active set's `rest` (prescription) or the previous logged set's actual rest. Persist the `SessionLog` to the current month file on every log (whole-file rewrite).
+6. **Log a set**: validate `weight > 0` and `reps > 0`, append to `LoggedSet` list. Auto-start rest timer seeded from the next set's prescribed `rest`; the logged `restSec` of the just-logged set records actual elapsed rest since the previous logged set. Persist the `SessionLog` to `sessions.json` on every log (whole-file rewrite; triggers rollover if the threshold is crossed).
 7. **Myo-rep flow**: active row starts as activation set with `activationReps` prescribed. On Log, the row collapses and a mini-set row appears. User logs each mini-set. **End cluster** button or hitting `miniSetCount` collapses the whole `MyoRep` into a single logged entry.
 8. **One-time exercise sub**: tap exercise name → ExercisePicker → "Substitute (today only)". Updates `ExecutedExercise.exerciseId`, sets `substitutedFromId`. Prescribed sets stay (user decides whether to follow them).
 9. **Persistent sub**: ExercisePicker → "Substitute (rest of program)". Mutates the active `Routine` (rewrites `{id}.json`); all future weeks' `ExerciseBlock`s referencing `substitutedFromId` get their `exerciseId` changed. A sidecar `routine.history.json` records each persistent edit (timestamp, from, to, scope).
@@ -464,7 +473,9 @@ Mid-session reschedule is disallowed — must finish or abort first.
 - Writes: write to `{path}.tmp`, fsync, atomic rename (`AtomicWrite` helper). If rename fails, toast + abort the user action — don't claim a set is logged when it isn't.
 - SAF: `Dispatchers.IO`, progress callbacks, `finally` closes. Failure → toast + log.
 
-**Corrupt monthly log file:** parse fails → rename to `sessions-YYYY-MM.corrupt.{timestamp}.json`, start fresh empty file, surface banner. Rename rather than delete: lets users recover manually.
+**Corrupt `sessions.json`:** parse fails → rename to `sessions.corrupt.{timestamp}.json`, start fresh empty file, surface banner. Rename rather than delete: lets users recover manually.
+
+**Corrupt archive file:** parse fails for one archive → skip it for queries (banner names which file), continue serving other archives + live `sessions.json`. User can move the renamed `.corrupt` file aside and import-merge a backup to restore.
 
 **Missing exercise referenced by a SessionLog or Routine** (only possible after hand-editing or future-schema import): synthesize `Exercise(id=id, name="(unknown: $id)", pattern=ISOLATION, ...)` in memory. Never crash, never drop the log entry. Settings shows a "Resolve unknown exercises" entry that remaps each unknown ID to a real exercise (rewrites affected log/routine files).
 
@@ -475,7 +486,7 @@ Mid-session reschedule is disallowed — must finish or abort first.
 ## 8. Edge cases
 
 - **First-ever launch:** no `state.json`, no routines, empty logs dir, empty customs. `AppState` initialized to defaults. Home renders first-run experience (5.5).
-- **Mid-month performed/scheduled mismatch:** session scheduled in April but performed in May → lives in `sessions-2026-05.json` (keyed by `performedDate`). April scheduled entry retains the back-reference via `sessionLogId`. Per-exercise history sorts by `performedDate`.
+- **Scheduled vs. performed date drift:** session scheduled on one day but performed on another stays in `sessions.json` ordered by `performedDate`. The `ScheduledSession` retains a back-reference via `sessionLogId`. All history views sort by `performedDate`.
 - **Time zone / DST:** dates use `LocalDate` (no zone). Instants use UTC ISO-8601. Display in device local time. Rest timer uses `SystemClock.elapsedRealtime()`, not wall clock.
 - **App backgrounded during rest timer:** ticker uses `SystemClock.elapsedRealtime()`, so it stays accurate. No notification fires (out of scope) — user must reopen the app.
 - **kg/lb display:** JSON always stores `weightKg`. UI converts at the edge. Display rounding (0.5 kg / 1 lb); internal math never rounds.
@@ -498,7 +509,7 @@ JUnit only (matches DiRead's test setup). No Espresso in v1.
 
 **`storage/`** (use a `tempDirectoryRule()`-style helper):
 - `RoutineRepositoryTest`: save → load → equals; overwrite; delete; list.
-- `SessionLogRepositoryTest`: writes go to the correct month file (boundary: 00:01 vs 23:59 on month edges). Loading a range merges to chronological list.
+- `SessionLogRepositoryTest`: write/read/update/delete round-trip; sorted-by-`performedDate` invariant holds across writes. **Rollover**: writes that push `sessions.json` past 1 MB atomically produce `archive/sessions-{firstDate}_{lastDate}.json` with correct date range; `sessions.json` is empty afterward; the next write succeeds and is preserved. **Lazy archive load**: a date-range query that doesn't overlap an archive does not open it; one that does, opens and merges. **Merged ordering**: queries spanning live + archive return one chronological list.
 - `BackupArchiveTest`: export → import in a fresh dir produces identical `filesDir` contents. Replace vs. merge modes. Corrupt zip rejected cleanly.
 - `AppStateTest`: schedule layout for a 4-week mesocycle × 3 weekday pattern produces exactly 4×3 entries on correct weekdays. REPEAT mode produces 8 weeks ahead. Window-extension triggers at ≤ 2 weeks remaining.
 
@@ -531,3 +542,98 @@ JUnit only (matches DiRead's test setup). No Espresso in v1.
 - v2 analysis layer reads only `SessionLog` and `Routine` files. No schema change required: it's a derived view.
 - Persistent-sub `routine.history.json` sidecar already records edits; v2 can surface a "view routine history / revert" UI.
 - Drive auto-backup in v2 reuses the same `BackupArchive` zip format; only the destination changes.
+
+## 12. Glossary
+
+This section defines every term DiTrain surfaces in its UI or routine JSON schema. The same content ships in `app/src/main/assets/glossary.json` and is rendered by `GlossaryDialogController` (MainMenu → Glossary) so the in-app text never drifts from this spec. The asset file is a JSON array of `{ term, category, definition }` records; entries are sorted by category then term in the dialog.
+
+### 12.1 Programming
+
+- **Routine** — a structured training program. In DiTrain, a routine has weeks, each week has sessions, each session has exercise blocks with prescribed sets. See *Mesocycle* and *Template*.
+- **Mesocycle** — a routine with `loopMode = ONCE`: runs for a fixed number of weeks and ends.
+- **Template** — informal name for a routine with `loopMode = REPEAT`: weeks cycle indefinitely.
+- **Week** — a labelled group of sessions within a routine (e.g., "Week 1", "Heavy", "Deload").
+- **Deload** — a week with deliberately reduced volume/intensity to dissipate fatigue. DiTrain doesn't enforce a deload pattern; it's a convention authors of routines may use as a Week label.
+- **Session / Workout** — one training day's prescribed work. A session belongs to a week and lists its exercise blocks in order.
+- **Block / Exercise block** — within a session, one exercise plus its prescribed sets.
+- **Loop mode** — `ONCE` (mesocycle ends after N weeks) or `REPEAT` (weeks cycle indefinitely).
+- **Weekly pattern** — the weekdays on which the user trains (e.g., Mon/Wed/Fri). Used at routine-activation time to lay out the calendar.
+
+### 12.2 Sets and reps
+
+- **Set** — a group of reps performed without rest.
+- **Rep** — one full repetition of an exercise.
+- **Straight set** — a single block of reps at one weight, no clusters.
+- **Top set** — typically the heaviest set of an exercise on a given day. Surfaced in DiTrain as "best e1RM" / "best load" entries in the PR list.
+- **AMRAP (As Many Reps As Possible)** — a prescription instructing the user to perform as many reps as they can with the prescribed weight. Often used for top sets.
+- **Tempo** — speed of each rep, written as `eccentric-pause-concentric` in seconds (e.g., `3-1-1` = 3 sec down, 1 sec pause, 1 sec up).
+- **Rest** — recovery time between sets, in seconds. May be prescribed by the routine or chosen freely.
+
+### 12.3 Myo-reps
+
+- **Myo-rep set** — a cluster technique where one activation set is followed by short-rest mini-sets at the same weight, accumulating fatigue with high stimulus efficiency. Stored as a single `MyoRep` set in DiTrain, not as separate sets.
+- **Activation set** — the first set in a myo-rep cluster, typically taken to a high effort level (e.g., RPE 9 at 15 reps).
+- **Mini-set** — each follow-up set in a myo-rep cluster, short and small (e.g., 5 reps with 15 sec rest), continuing until target count or stop threshold is hit.
+
+### 12.4 Effort and load
+
+- **RPE (Rate of Perceived Exertion)** — a 1–10 scale (with half-points) for self-rated set difficulty. 10 = absolute max, 8 = ~2 reps in reserve. DiTrain accepts half-points (e.g., 8.5).
+- **RIR (Reps In Reserve)** — integer 0–5 estimating how many more reps could have been completed before failure. Equivalent to RPE for most users: RIR ≈ 10 − RPE.
+- **1RM (One-rep max)** — the maximum weight that can be lifted for one rep with proper form.
+- **e1RM (estimated 1RM)** — 1RM estimated from a sub-maximal set. DiTrain uses Epley with RPE adjustment: `weight × (1 + reps/30) × (1 + 0.0333 × (10 − RPE))`. Falls back to plain Epley when RPE missing.
+- **%1RM** — load expressed as a percentage of estimated 1RM. DiTrain resolves to an absolute kg value at the moment a set is prescribed, using the most recent e1RM available for that exercise.
+- **Bar weight** — the empty weight of the bar used for barbell exercises. Default 20 kg, configurable in Settings; affects load-suggestion display.
+- **PR (Personal Record)** — best historical performance on an exercise. DiTrain tracks three PR types: best e1RM, best weight (for any reps), and best reps at a given weight.
+
+### 12.5 Movement patterns
+
+- **Squat** — knee-dominant, vertical-torso lower-body lift.
+- **Hinge** — hip-dominant lower-body lift, e.g., deadlift, RDL, good morning.
+- **Horizontal push** — pressing weight away from the chest horizontally, e.g., bench press, push-up.
+- **Horizontal pull** — pulling weight to the torso horizontally, e.g., barbell row.
+- **Vertical push** — pressing weight overhead, e.g., overhead press.
+- **Vertical pull** — pulling weight down from overhead, e.g., pull-up, lat pull-down.
+- **Lunge** — single-leg lower-body lift, e.g., walking lunge, Bulgarian split squat.
+- **Carry** — loaded gait, e.g., farmer's carry, suitcase carry.
+- **Core** — direct trunk work, e.g., plank, hanging leg raise.
+- **Isolation** — single-joint movement, e.g., biceps curl, lateral raise.
+
+### 12.6 Splits (informal — referenced in bundled examples, not stored in DiTrain's data model)
+
+- **Full body** — every session trains the whole body. High frequency per muscle.
+- **Upper/Lower** — alternating upper- and lower-body sessions. Typical 4-day-per-week split.
+- **Push/Pull/Legs (PPL)** — three session types repeating: pushing muscles, pulling muscles, lower body. Typical 6-day split (PPL twice).
+- **Body part split** ("bro split") — one body part per session. Lower frequency per muscle.
+
+### 12.7 Muscle groups
+
+DiTrain's catalog tags each exercise with primary and secondary muscles. Categories: **quads, hamstrings, glutes, chest, upper back, lats, front delt, side delt, rear delt, biceps, triceps, forearms, abs, obliques, lower back, calves, traps, neck, adductors, abductors**.
+
+### 12.8 Equipment
+
+Categories: **barbell, dumbbell, machine, cable, bodyweight, band, other**. Exercises can list multiple (e.g., barbell + cable for landmine variants).
+
+### 12.9 Adaptation actions (DiTrain-specific)
+
+- **Substitute (today only)** — replace a prescribed exercise with another from the catalog for this session only. The original prescription stays in the routine.
+- **Substitute (rest of program)** — replace an exercise in the routine itself, going forward. Edits the routine file; a sidecar `routine.history.json` records the change for auditability.
+- **Skip exercise** — mark a prescribed exercise as not performed in this session, with optional reason note.
+- **Ad-hoc exercise** — an exercise added during the session that wasn't in the prescription. Logged but not attached to any prescription parent.
+- **Reschedule** — move a `ScheduledSession` from its planned date to another date. Does not cascade to following sessions.
+- **Missed session** — a `ScheduledSession` whose date has passed without being started or logged. Surfaces grouped at the top of the calendar dialog for the user to remove or reschedule.
+
+### 12.10 Storage / backup
+
+- **Scheduled session** — a calendar entry: routine + week + session-template + date. Created when a routine is activated.
+- **Session log** — the persisted record of an actual training session, including all logged sets, executed exercises, performed date, and notes.
+- **Active routine** — the single routine whose `ScheduledSession`s populate today's view. There is at most one at a time.
+- **Backup archive** — a `.zip` produced by DiTrain's Export action, containing all routines, session logs, custom exercises, and app state, plus a `manifest.json`.
+- **Rollover** — automatic archival of `sessions.json` to `logs/archive/sessions-{firstDate}_{lastDate}.json` when the live file exceeds 1 MB. Transparent to the user.
+
+### 12.11 Out of scope for v1 (defined here for forward reference)
+
+- **Volume landmarks (MEV/MAV/MRV)** — Renaissance Periodization framework for weekly hard sets per muscle. *v2 analysis layer.*
+- **Autoregulation** — adjusting today's load/volume based on last session's RPE or recovery readiness. *v2.*
+- **Tonnage** — total weight moved (sets × reps × load). *v2 analysis layer may surface.*
+- **INOL** — Intensity × Number Of Lifts metric. *Possibly v2.*
+- **Block / linear / DUP periodization** — programming structures. Not enforced; routines can express any structure via their week sequence.
