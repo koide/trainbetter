@@ -1,0 +1,52 @@
+[
+  {
+    "id": "barbell-back-squat",
+    "name": "Barbell Back Squat",
+    "aliases": ["Back Squat", "Squat"],
+    "pattern": "SQUAT",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS", "LOWER_BACK"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/BBSquat"
+  },
+  {
+    "id": "barbell-deadlift",
+    "name": "Barbell Deadlift",
+    "aliases": ["Conventional Deadlift"],
+    "pattern": "HINGE",
+    "primaryMuscles": ["HAMSTRINGS", "GLUTES", "LOWER_BACK"],
+    "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/ErectorSpinae/BBDeadlift"
+  },
+  {
+    "id": "barbell-bench-press",
+    "name": "Barbell Bench Press",
+    "aliases": ["Bench"],
+    "pattern": "HORIZONTAL_PUSH",
+    "primaryMuscles": ["CHEST", "TRICEPS"],
+    "secondaryMuscles": ["FRONT_DELT"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/PectoralSternal/BBBenchPress"
+  },
+  {
+    "id": "barbell-overhead-press",
+    "name": "Barbell Overhead Press",
+    "aliases": ["OHP", "Strict Press"],
+    "pattern": "VERTICAL_PUSH",
+    "primaryMuscles": ["FRONT_DELT", "TRICEPS"],
+    "secondaryMuscles": ["SIDE_DELT", "TRAPS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/DeltoidAnterior/BBMilitaryPress"
+  },
+  {
+    "id": "pull-up",
+    "name": "Pull-up",
+    "aliases": ["Chin-up (overhand)"],
+    "pattern": "VERTICAL_PULL",
+    "primaryMuscles": ["LATS", "BICEPS"],
+    "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/LatissimusDorsi/BWPullup"
+  }
+]
