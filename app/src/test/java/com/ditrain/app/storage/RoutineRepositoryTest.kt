@@ -8,6 +8,7 @@ import com.ditrain.app.model.Routine
 import com.ditrain.app.model.SessionTemplate
 import com.ditrain.app.model.SetPrescription
 import com.ditrain.app.model.Week
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -37,24 +38,24 @@ class RoutineRepositoryTest {
 
     private fun repo() = RoutineRepository(tmp.root)
 
-    @Test fun `save then load equals`() {
+    @Test fun `save then load equals`() = runBlocking {
         val repo = repo()
         val r = sampleRoutine()
         repo.save(r)
         assertEquals(r, repo.load("r1"))
     }
 
-    @Test fun `save creates routines subdir`() {
+    @Test fun `save creates routines subdir`() = runBlocking {
         repo().save(sampleRoutine())
         assertTrue(tmp.root.resolve("routines").exists())
         assertTrue(tmp.root.resolve("routines/r1.json").exists())
     }
 
-    @Test fun `load missing returns null`() {
+    @Test fun `load missing returns null`() = runBlocking {
         assertNull(repo().load("nope"))
     }
 
-    @Test fun `overwrite same id replaces content`() {
+    @Test fun `overwrite same id replaces content`() = runBlocking {
         val repo = repo()
         repo.save(sampleRoutine())
         val updated = sampleRoutine().copy(name = "renamed")
@@ -62,14 +63,14 @@ class RoutineRepositoryTest {
         assertEquals("renamed", repo.load("r1")?.name)
     }
 
-    @Test fun `list returns saved ids only`() {
+    @Test fun `list returns saved ids only`() = runBlocking {
         val repo = repo()
         repo.save(sampleRoutine("a"))
         repo.save(sampleRoutine("b"))
         assertEquals(setOf("a", "b"), repo.list().toSet())
     }
 
-    @Test fun `delete removes the file`() {
+    @Test fun `delete removes the file`() = runBlocking {
         val repo = repo()
         repo.save(sampleRoutine("d"))
         assertTrue(repo.delete("d"))
@@ -77,11 +78,11 @@ class RoutineRepositoryTest {
         assertFalse(tmp.root.resolve("routines/d.json").exists())
     }
 
-    @Test fun `delete missing returns false`() {
+    @Test fun `delete missing returns false`() = runBlocking {
         assertFalse(repo().delete("never"))
     }
 
-    @Test fun `corrupt file load returns null and is not deleted`() {
+    @Test fun `corrupt file load returns null and is not deleted`() = runBlocking {
         val repo = repo()
         val routinesDir = tmp.root.resolve("routines")
         routinesDir.mkdirs()

@@ -3,6 +3,7 @@ package com.ditrain.app.storage
 import com.ditrain.app.model.ExecutedExercise
 import com.ditrain.app.model.LoggedSet
 import com.ditrain.app.model.SessionLog
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -33,7 +34,7 @@ class SessionLogRepositoryTest {
 
     private fun repo(rolloverBytes: Long = 1L shl 20) = SessionLogRepository(tmp.root, rolloverBytes)
 
-    @Test fun `append writes to sessions json sorted by performedDate`() {
+    @Test fun `append writes to sessions json sorted by performedDate`() = runBlocking {
         val repo = repo()
         repo.append(log("a", "2026-05-02"))
         repo.append(log("b", "2026-05-01"))    // earlier — should sort first
@@ -41,13 +42,13 @@ class SessionLogRepositoryTest {
         assertEquals(listOf("b", "a"), all.map { it.id })
     }
 
-    @Test fun `creates logs subdir on first write`() {
+    @Test fun `creates logs subdir on first write`() = runBlocking {
         repo().append(log("only", "2026-05-01"))
         assertTrue(File(tmp.root, "logs").exists())
         assertTrue(File(tmp.root, "logs/sessions.json").exists())
     }
 
-    @Test fun `update existing id replaces in place`() {
+    @Test fun `update existing id replaces in place`() = runBlocking {
         val repo = repo()
         repo.append(log("a", "2026-05-01", weightKg = 80.0))
         val updated = log("a", "2026-05-01", weightKg = 100.0)
@@ -56,7 +57,7 @@ class SessionLogRepositoryTest {
         assertEquals(100.0, (loaded.executed[0].sets[0] as LoggedSet.Straight).weightKg, 1e-9)
     }
 
-    @Test fun `delete by id removes the entry`() {
+    @Test fun `delete by id removes the entry`() = runBlocking {
         val repo = repo()
         repo.append(log("a", "2026-05-01"))
         repo.append(log("b", "2026-05-02"))
@@ -64,7 +65,7 @@ class SessionLogRepositoryTest {
         assertEquals(listOf("b"), repo.loadAll().map { it.id })
     }
 
-    @Test fun `rollover archives the live file when bytes exceed threshold`() {
+    @Test fun `rollover archives the live file when bytes exceed threshold`() = runBlocking {
         // Tiny threshold forces a rollover after the first big write
         val repo = repo(rolloverBytes = 200L)
         repo.append(log("a", "2026-05-01"))     // first append, fits
@@ -84,7 +85,7 @@ class SessionLogRepositoryTest {
         assertEquals(setOf("a", "b"), all.map { it.id }.toSet())
     }
 
-    @Test fun `load returns merged chronological list across live and archive`() {
+    @Test fun `load returns merged chronological list across live and archive`() = runBlocking {
         val repo = repo(rolloverBytes = 200L)
         repo.append(log("old", "2026-01-01"))
         repo.append(log("mid", "2026-03-01"))   // forces rollover; old + mid archived
@@ -94,7 +95,7 @@ class SessionLogRepositoryTest {
         assertEquals(listOf("old", "mid", "new"), all.map { it.id })
     }
 
-    @Test fun `archive filename encodes correct first and last performedDate`() {
+    @Test fun `archive filename encodes correct first and last performedDate`() = runBlocking {
         val repo = repo(rolloverBytes = 200L)
         repo.append(log("a", "2026-02-15"))
         repo.append(log("b", "2026-04-01"))     // triggers rollover containing both
@@ -103,7 +104,7 @@ class SessionLogRepositoryTest {
         assertEquals("sessions-2026-02-15_2026-04-01.json", archives[0].name)
     }
 
-    @Test fun `corrupt live file is renamed and a fresh one created`() {
+    @Test fun `corrupt live file is renamed and a fresh one created`() = runBlocking {
         val live = File(tmp.root, "logs/sessions.json")
         live.parentFile.mkdirs()
         live.writeText("{ this is broken")
@@ -115,7 +116,7 @@ class SessionLogRepositoryTest {
         assertNotNull(File(tmp.root, "logs").listFiles()?.firstOrNull { it.name.startsWith("sessions.corrupt.") })
     }
 
-    @Test fun `corrupt archive is skipped and other data still loads`() {
+    @Test fun `corrupt archive is skipped and other data still loads`() = runBlocking {
         val repo = repo()
         repo.append(log("live", "2026-06-01"))
         // Forge a bogus archive
@@ -126,7 +127,7 @@ class SessionLogRepositoryTest {
         assertEquals(listOf("live"), all.map { it.id })
     }
 
-    @Test fun `loadByDateRange opens only overlapping archives`() {
+    @Test fun `loadByDateRange opens only overlapping archives`() = runBlocking {
         val repo = repo(rolloverBytes = 200L)
         repo.append(log("oldest", "2025-01-01"))
         repo.append(log("middle", "2025-06-01"))   // triggers rollover with both

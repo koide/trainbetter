@@ -3,6 +3,8 @@ package com.ditrain.app.storage
 import com.ditrain.app.model.SessionLog
 import com.ditrain.app.util.AtomicWrite
 import com.ditrain.app.util.JsonIo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import java.io.File
 
@@ -26,14 +28,14 @@ class SessionLogRepository(
 
     private val listSerializer = ListSerializer(SessionLog.serializer())
 
-    fun append(log: SessionLog) {
+    suspend fun append(log: SessionLog) = withContext(Dispatchers.IO) {
         val current = readLive().toMutableList()
         current.add(log)
         writeLive(current)
         maybeRollover()
     }
 
-    fun upsert(log: SessionLog) {
+    suspend fun upsert(log: SessionLog) = withContext(Dispatchers.IO) {
         val current = readLive().toMutableList()
         val idx = current.indexOfFirst { it.id == log.id }
         if (idx >= 0) current[idx] = log else current.add(log)
@@ -41,22 +43,22 @@ class SessionLogRepository(
         maybeRollover()
     }
 
-    fun delete(id: String): Boolean {
+    suspend fun delete(id: String): Boolean = withContext(Dispatchers.IO) {
         val current = readLive().toMutableList()
         val removed = current.removeAll { it.id == id }
         if (removed) writeLive(current)
-        return removed
+        removed
     }
 
-    fun loadAll(): List<SessionLog> {
+    suspend fun loadAll(): List<SessionLog> = withContext(Dispatchers.IO) {
         val all = mutableListOf<SessionLog>()
         all.addAll(readAllArchives())
         all.addAll(readLive())
-        return all.sortedBy { it.performedDate }
+        all.sortedBy { it.performedDate }
     }
 
     /** Returns logs whose performedDate is within [from..to] inclusive. */
-    fun loadByDateRange(from: String, to: String): List<SessionLog> {
+    suspend fun loadByDateRange(from: String, to: String): List<SessionLog> = withContext(Dispatchers.IO) {
         val all = mutableListOf<SessionLog>()
         archiveFiles().forEach { f ->
             val (firstDate, lastDate) = decodeArchiveRange(f.name) ?: return@forEach
@@ -65,7 +67,7 @@ class SessionLogRepository(
                 .getOrNull()?.let { all.addAll(it.filter { l -> l.performedDate in from..to }) }
         }
         all.addAll(readLive().filter { it.performedDate in from..to })
-        return all.sortedBy { it.performedDate }
+        all.sortedBy { it.performedDate }
     }
 
     private fun readLive(): List<SessionLog> {
@@ -83,9 +85,6 @@ class SessionLogRepository(
         val renamed = File(logsDir, "sessions.corrupt.${ts}.json")
         AtomicWrite.writeText(renamed, raw)
         if (!liveFile.delete()) {
-            // delete() failed (rare on Android internal storage, possible on some
-            // SD-card mounts). Rename to a distinct name so subsequent readLive()
-            // calls won't re-quarantine the same content on every load.
             liveFile.renameTo(File(logsDir, "sessions.unremovable.${ts}.json"))
         }
     }
@@ -116,7 +115,6 @@ class SessionLogRepository(
                 .getOrDefault(emptyList())
         }
 
-    /** Returns Pair(firstDate, lastDate) for "sessions-YYYY-MM-DD_YYYY-MM-DD.json"; null on malformed names. */
     private fun decodeArchiveRange(name: String): Pair<String, String>? {
         val core = name.removePrefix("sessions-").removeSuffix(".json")
         val parts = core.split("_")
@@ -124,6 +122,6 @@ class SessionLogRepository(
     }
 
     companion object {
-        const val DEFAULT_ROLLOVER_BYTES: Long = 1L shl 20      // 1 MiB
+        const val DEFAULT_ROLLOVER_BYTES: Long = 1L shl 20
     }
 }

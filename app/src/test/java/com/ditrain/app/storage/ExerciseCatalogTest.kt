@@ -4,6 +4,7 @@ import com.ditrain.app.model.Equipment
 import com.ditrain.app.model.Exercise
 import com.ditrain.app.model.MovementPattern
 import com.ditrain.app.model.MuscleGroup
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -34,13 +35,13 @@ class ExerciseCatalogTest {
         ),
     )
 
-    @Test fun `bundled-only load exposes both entries`() {
+    @Test fun `bundled-only load exposes both entries`() = runBlocking {
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = File(tmp.root, "custom.json"))
         assertEquals(2, catalog.visibleExercises().size)
         assertEquals(bundled[0], catalog.byId("back-squat"))
     }
 
-    @Test fun `custom exercise is added and resolvable`() {
+    @Test fun `custom exercise is added and resolvable`() = runBlocking {
         val customs = File(tmp.root, "custom.json")
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = customs)
         val custom = Exercise(
@@ -56,7 +57,7 @@ class ExerciseCatalogTest {
         assertTrue(customs.exists())
     }
 
-    @Test fun `soft-deleted custom is hidden by default but still resolves by id`() {
+    @Test fun `soft-deleted custom is hidden by default but still resolves by id`() = runBlocking {
         val customs = File(tmp.root, "custom.json")
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = customs)
         val custom = Exercise(
@@ -75,7 +76,7 @@ class ExerciseCatalogTest {
         assertTrue(stillResolvable!!.deleted)
     }
 
-    @Test fun `soft-deleted custom included when includeDeleted=true`() {
+    @Test fun `soft-deleted custom included when includeDeleted=true`() = runBlocking {
         val customs = File(tmp.root, "custom.json")
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = customs)
         catalog.addCustom(Exercise(
@@ -90,7 +91,7 @@ class ExerciseCatalogTest {
         assertEquals(3, catalog.visibleExercises(includeDeleted = true).size)
     }
 
-    @Test fun `restore clears deleted flag`() {
+    @Test fun `restore clears deleted flag`() = runBlocking {
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = File(tmp.root, "c.json"))
         catalog.addCustom(Exercise(
             id = "x", name = "X",
@@ -104,7 +105,7 @@ class ExerciseCatalogTest {
         assertFalse(catalog.byId("x")!!.deleted)
     }
 
-    @Test fun `hard-delete is refused when references exist`() {
+    @Test fun `hard-delete is refused when references exist`() = runBlocking {
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = File(tmp.root, "c.json"))
         catalog.addCustom(Exercise(
             id = "x", name = "X",
@@ -118,7 +119,7 @@ class ExerciseCatalogTest {
         assertEquals(3, catalog.visibleExercises(includeDeleted = true).size)
     }
 
-    @Test fun `hard-delete succeeds when no references`() {
+    @Test fun `hard-delete succeeds when no references`() = runBlocking {
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = File(tmp.root, "c.json"))
         catalog.addCustom(Exercise(
             id = "y", name = "Y",
@@ -132,7 +133,7 @@ class ExerciseCatalogTest {
         assertNull(catalog.byId("y"))
     }
 
-    @Test fun `bundled exercise cannot be soft or hard deleted`() {
+    @Test fun `bundled exercise cannot be soft or hard deleted`() = runBlocking {
         val catalog = ExerciseCatalog.fromInMemory(bundled, customsFile = File(tmp.root, "c.json"))
         val softOk = catalog.softDelete("back-squat")
         assertFalse(softOk)
@@ -141,7 +142,7 @@ class ExerciseCatalogTest {
         assertFalse(catalog.byId("back-squat")!!.deleted)
     }
 
-    @Test fun `customs persisted between catalog instances`() {
+    @Test fun `customs persisted between catalog instances`() = runBlocking {
         val customs = File(tmp.root, "custom.json")
         val cat1 = ExerciseCatalog.fromInMemory(bundled, customsFile = customs)
         cat1.addCustom(Exercise(

@@ -4,19 +4,21 @@ import com.ditrain.app.model.AppState
 import com.ditrain.app.model.Settings
 import com.ditrain.app.util.AtomicWrite
 import com.ditrain.app.util.JsonIo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class AppStateRepository(filesDir: File) {
     private val file = File(filesDir, "state.json")
 
-    fun load(): AppState {
-        if (!file.exists()) return defaultState()
-        return runCatching {
+    suspend fun load(): AppState = withContext(Dispatchers.IO) {
+        if (!file.exists()) return@withContext defaultState()
+        runCatching {
             JsonIo.json.decodeFromString(AppState.serializer(), file.readText())
         }.getOrElse { defaultState() }
     }
 
-    fun save(state: AppState) {
+    suspend fun save(state: AppState) = withContext(Dispatchers.IO) {
         AtomicWrite.writeText(file, JsonIo.json.encodeToString(AppState.serializer(), state))
     }
 
