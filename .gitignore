@@ -8,4 +8,4 @@ keystore.properties
 tools/
 .idea/
 .kotlin/
-.claude/
+.claude/settings.local.json
