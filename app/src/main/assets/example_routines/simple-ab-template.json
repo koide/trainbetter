@@ -1,0 +1,228 @@
+{
+  "id": "simple-ab-template",
+  "name": "Simple A/B Template",
+  "description": "Two alternating full-body sessions with classic compound lifts. Repeats indefinitely until you switch routines.",
+  "author": "DiTrain bundled examples",
+  "schemaVersion": 1,
+  "loopMode": "REPEAT",
+  "defaultWeeklyPattern": [0, 2, 4],
+  "weeks": [
+    {
+      "label": "Week 1",
+      "sessions": [
+        {
+          "id": "day-a",
+          "name": "Day A",
+          "blocks": [
+            {
+              "exerciseId": "barbell-back-squat",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 180,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 180,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 180,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            },
+            {
+              "exerciseId": "barbell-bench-press",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.8 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            },
+            {
+              "exerciseId": "barbell-row",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "range", "min": 6, "max": 10 },
+                  "load": { "type": "open" },
+                  "rpeTarget": 8.0,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "range", "min": 6, "max": 10 },
+                  "load": { "type": "open" },
+                  "rpeTarget": 8.0,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "range", "min": 6, "max": 10 },
+                  "load": { "type": "open" },
+                  "rpeTarget": 8.0,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            }
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "day-b",
+          "name": "Day B",
+          "blocks": [
+            {
+              "exerciseId": "barbell-deadlift",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 3 },
+                  "load": { "type": "pct_1rm", "pct": 0.85 },
+                  "rpeTarget": null,
+                  "rest": 240,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 3 },
+                  "load": { "type": "pct_1rm", "pct": 0.85 },
+                  "rpeTarget": null,
+                  "rest": 240,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 3 },
+                  "load": { "type": "pct_1rm", "pct": 0.85 },
+                  "rpeTarget": null,
+                  "rest": 240,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            },
+            {
+              "exerciseId": "barbell-overhead-press",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.75 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.75 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "fixed", "reps": 5 },
+                  "load": { "type": "pct_1rm", "pct": 0.75 },
+                  "rpeTarget": null,
+                  "rest": 150,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            },
+            {
+              "exerciseId": "chin-up",
+              "sets": [
+                {
+                  "type": "straight",
+                  "reps": { "type": "amrap" },
+                  "load": { "type": "open" },
+                  "rpeTarget": null,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "amrap" },
+                  "load": { "type": "open" },
+                  "rpeTarget": null,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                },
+                {
+                  "type": "straight",
+                  "reps": { "type": "amrap" },
+                  "load": { "type": "open" },
+                  "rpeTarget": null,
+                  "rest": 120,
+                  "tempo": null,
+                  "notes": null
+                }
+              ],
+              "notes": null
+            }
+          ],
+          "cardioBlocks": []
+        }
+      ]
+    }
+  ]
+}
