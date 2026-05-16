@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         rootContainer = FrameLayout(this)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
         setContentView(rootContainer)
 
         renderHome()
