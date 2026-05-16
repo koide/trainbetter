@@ -75,7 +75,10 @@ class RoutineListDialogController(
             },
         ).apply {
             isEnabled = !isActive
-            setOnClickListener { onActivate(r) }
+            setOnClickListener {
+                dialog.dismiss()
+                onActivate(r)
+            }
         }
 
         val deleteBtn = ViewStyling.dangerButton(context, "Delete", compact = true, dp = dp).apply {
