@@ -22,6 +22,7 @@ class MainMenuDialogController(
     private val dp: (Int) -> Int,
     private val onOpenRoutines: () -> Unit,
     private val onImportRoutine: () -> Unit,
+    private val onBrowseExercises: () -> Unit,
 ) {
     fun show() {
         val container = LinearLayout(context).apply {
@@ -42,6 +43,10 @@ class MainMenuDialogController(
         container.addView(row("Import routine", "Paste JSON, pick a file, or load a bundled example") {
             dialog.dismiss()
             onImportRoutine()
+        })
+        container.addView(row("Browse exercises", "See the bundled exercise catalog and their IDs") {
+            dialog.dismiss()
+            onBrowseExercises()
         })
 
         dialog.show()

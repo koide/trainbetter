@@ -97,6 +97,22 @@ class MainActivity : AppCompatActivity() {
             dp = dp,
             onOpenRoutines = { openRoutineList() },
             onImportRoutine = { openImport() },
+            onBrowseExercises = { openExerciseBrowser() },
+        ).show()
+    }
+
+    private fun openExerciseBrowser() {
+        val detail = com.ditrain.app.ui.dialog.ExerciseDetailDialogController(this, dp)
+        com.ditrain.app.ui.dialog.ExercisePickerDialogController(
+            context = this,
+            catalog = catalog,
+            dp = dp,
+            onPicked = { ex ->
+                // No "pick" action in browse mode — show details instead.
+                detail.show(ex)
+            },
+            onDetail = { ex -> detail.show(ex) },
+            title = "Exercise catalog",
         ).show()
     }
 

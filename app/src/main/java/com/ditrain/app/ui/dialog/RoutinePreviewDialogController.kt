@@ -20,6 +20,7 @@ import com.ditrain.app.model.Routine
 import com.ditrain.app.model.SetPrescription
 import com.ditrain.app.storage.ExerciseCatalog
 import com.ditrain.app.ui.ViewStyling
+import com.ditrain.app.util.JsonIo
 
 /**
  * Read-only structural view of a routine. Used by the import flow (where buttons are
@@ -46,6 +47,18 @@ class RoutinePreviewDialogController(
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(8), dp(14), dp(8))
+
+            if (mode == Mode.IMPORT) {
+                addView(android.widget.TextView(context).apply {
+                    text = "View JSON ▸"
+                    textSize = 12f
+                    setTextColor(android.graphics.Color.parseColor("#60A5FA"))
+                    setPadding(0, 0, 0, dp(10))
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener { showJsonDialog(routine) }
+                })
+            }
 
             addView(TextView(context).apply {
                 text = routine.name
@@ -183,4 +196,21 @@ class RoutinePreviewDialogController(
     }
 
     private fun weekdayName(idx: Int): String = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[idx]
+
+    private fun showJsonDialog(routine: Routine) {
+        val json = JsonIo.json.encodeToString(Routine.serializer(), routine)
+        val text = android.widget.TextView(context).apply {
+            this.text = json
+            textSize = 11f
+            setTextColor(android.graphics.Color.WHITE)
+            setTextIsSelectable(true)
+            typeface = android.graphics.Typeface.MONOSPACE
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Routine JSON")
+            .setView(android.widget.ScrollView(context).apply { addView(text) })
+            .setPositiveButton("Close", null)
+            .show()
+    }
 }
