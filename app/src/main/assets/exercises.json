@@ -10,6 +10,46 @@
     "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/BBSquat"
   },
   {
+    "id": "barbell-front-squat",
+    "name": "Barbell Front Squat",
+    "aliases": ["Front Squat"],
+    "pattern": "SQUAT",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["UPPER_BACK"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/BBFrontSquat"
+  },
+  {
+    "id": "bulgarian-split-squat",
+    "name": "Bulgarian Split Squat",
+    "aliases": ["BSS", "Rear-foot Elevated Split Squat"],
+    "pattern": "LUNGE",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS", "ADDUCTORS"],
+    "equipment": ["DUMBBELL", "BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/DBBulgarianSquat"
+  },
+  {
+    "id": "goblet-squat",
+    "name": "Goblet Squat",
+    "aliases": ["DB Goblet Squat"],
+    "pattern": "SQUAT",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["ADDUCTORS"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/DBGobletSquat"
+  },
+  {
+    "id": "leg-press",
+    "name": "Leg Press",
+    "aliases": ["Machine Leg Press"],
+    "pattern": "SQUAT",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS"],
+    "equipment": ["MACHINE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/LVLegPress"
+  },
+  {
     "id": "barbell-deadlift",
     "name": "Barbell Deadlift",
     "aliases": ["Conventional Deadlift"],
@@ -18,6 +58,46 @@
     "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
     "equipment": ["BARBELL"],
     "descriptionUrl": "https://exrx.net/WeightExercises/ErectorSpinae/BBDeadlift"
+  },
+  {
+    "id": "romanian-deadlift",
+    "name": "Romanian Deadlift",
+    "aliases": ["RDL"],
+    "pattern": "HINGE",
+    "primaryMuscles": ["HAMSTRINGS", "GLUTES"],
+    "secondaryMuscles": ["LOWER_BACK", "FOREARMS"],
+    "equipment": ["BARBELL", "DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Hamstrings/BBStraightLegDeadlift"
+  },
+  {
+    "id": "trap-bar-deadlift",
+    "name": "Trap-bar Deadlift",
+    "aliases": ["Hex-bar Deadlift"],
+    "pattern": "HINGE",
+    "primaryMuscles": ["QUADS", "GLUTES", "HAMSTRINGS"],
+    "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/ErectorSpinae/TBDeadlift"
+  },
+  {
+    "id": "good-morning",
+    "name": "Good Morning",
+    "aliases": [],
+    "pattern": "HINGE",
+    "primaryMuscles": ["HAMSTRINGS", "LOWER_BACK"],
+    "secondaryMuscles": ["GLUTES"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/ErectorSpinae/BBGoodMorning"
+  },
+  {
+    "id": "hip-thrust",
+    "name": "Hip Thrust",
+    "aliases": ["Barbell Hip Thrust"],
+    "pattern": "HINGE",
+    "primaryMuscles": ["GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Glutes/BBHipThrust"
   },
   {
     "id": "barbell-bench-press",
@@ -30,9 +110,49 @@
     "descriptionUrl": "https://exrx.net/WeightExercises/PectoralSternal/BBBenchPress"
   },
   {
+    "id": "incline-barbell-bench",
+    "name": "Incline Barbell Bench Press",
+    "aliases": ["Incline Bench"],
+    "pattern": "HORIZONTAL_PUSH",
+    "primaryMuscles": ["CHEST", "FRONT_DELT"],
+    "secondaryMuscles": ["TRICEPS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/PectoralClavicular/BBInclineBenchPress"
+  },
+  {
+    "id": "dumbbell-bench-press",
+    "name": "Dumbbell Bench Press",
+    "aliases": ["DB Bench"],
+    "pattern": "HORIZONTAL_PUSH",
+    "primaryMuscles": ["CHEST", "TRICEPS"],
+    "secondaryMuscles": ["FRONT_DELT"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/PectoralSternal/DBBenchPress"
+  },
+  {
+    "id": "push-up",
+    "name": "Push-up",
+    "aliases": [],
+    "pattern": "HORIZONTAL_PUSH",
+    "primaryMuscles": ["CHEST", "TRICEPS"],
+    "secondaryMuscles": ["FRONT_DELT", "ABS"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/PectoralSternal/BWPushup"
+  },
+  {
+    "id": "dumbbell-floor-press",
+    "name": "Dumbbell Floor Press",
+    "aliases": [],
+    "pattern": "HORIZONTAL_PUSH",
+    "primaryMuscles": ["CHEST", "TRICEPS"],
+    "secondaryMuscles": ["FRONT_DELT"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": null
+  },
+  {
     "id": "barbell-overhead-press",
     "name": "Barbell Overhead Press",
-    "aliases": ["OHP", "Strict Press"],
+    "aliases": ["OHP", "Strict Press", "Military Press"],
     "pattern": "VERTICAL_PUSH",
     "primaryMuscles": ["FRONT_DELT", "TRICEPS"],
     "secondaryMuscles": ["SIDE_DELT", "TRAPS"],
@@ -40,13 +160,313 @@
     "descriptionUrl": "https://exrx.net/WeightExercises/DeltoidAnterior/BBMilitaryPress"
   },
   {
+    "id": "dumbbell-shoulder-press",
+    "name": "Dumbbell Shoulder Press",
+    "aliases": ["DB Press"],
+    "pattern": "VERTICAL_PUSH",
+    "primaryMuscles": ["FRONT_DELT", "TRICEPS"],
+    "secondaryMuscles": ["SIDE_DELT"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress"
+  },
+  {
+    "id": "landmine-press",
+    "name": "Landmine Press",
+    "aliases": [],
+    "pattern": "VERTICAL_PUSH",
+    "primaryMuscles": ["FRONT_DELT", "TRICEPS"],
+    "secondaryMuscles": ["UPPER_BACK", "ABS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "pike-push-up",
+    "name": "Pike Push-up",
+    "aliases": [],
+    "pattern": "VERTICAL_PUSH",
+    "primaryMuscles": ["FRONT_DELT", "TRICEPS"],
+    "secondaryMuscles": ["SIDE_DELT"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "barbell-row",
+    "name": "Barbell Row",
+    "aliases": ["Bent-over Row"],
+    "pattern": "HORIZONTAL_PULL",
+    "primaryMuscles": ["UPPER_BACK", "LATS"],
+    "secondaryMuscles": ["BICEPS", "REAR_DELT", "LOWER_BACK"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/BackGeneral/BBBentOverRow"
+  },
+  {
+    "id": "pendlay-row",
+    "name": "Pendlay Row",
+    "aliases": [],
+    "pattern": "HORIZONTAL_PULL",
+    "primaryMuscles": ["UPPER_BACK", "LATS"],
+    "secondaryMuscles": ["BICEPS", "REAR_DELT"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "dumbbell-row",
+    "name": "Dumbbell Row",
+    "aliases": ["One-arm DB Row"],
+    "pattern": "HORIZONTAL_PULL",
+    "primaryMuscles": ["LATS", "UPPER_BACK"],
+    "secondaryMuscles": ["BICEPS", "REAR_DELT"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/BackGeneral/DBBentOverRow"
+  },
+  {
+    "id": "cable-row",
+    "name": "Cable Row",
+    "aliases": ["Seated Row"],
+    "pattern": "HORIZONTAL_PULL",
+    "primaryMuscles": ["UPPER_BACK", "LATS"],
+    "secondaryMuscles": ["BICEPS", "REAR_DELT"],
+    "equipment": ["CABLE", "MACHINE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/BackGeneral/CBSeatedRow"
+  },
+  {
+    "id": "inverted-row",
+    "name": "Inverted Row",
+    "aliases": ["Bodyweight Row"],
+    "pattern": "HORIZONTAL_PULL",
+    "primaryMuscles": ["UPPER_BACK", "LATS"],
+    "secondaryMuscles": ["BICEPS", "REAR_DELT"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": null
+  },
+  {
     "id": "pull-up",
     "name": "Pull-up",
-    "aliases": ["Chin-up (overhand)"],
+    "aliases": ["Overhand Chin-up"],
     "pattern": "VERTICAL_PULL",
     "primaryMuscles": ["LATS", "BICEPS"],
     "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
     "equipment": ["BODYWEIGHT"],
     "descriptionUrl": "https://exrx.net/WeightExercises/LatissimusDorsi/BWPullup"
+  },
+  {
+    "id": "chin-up",
+    "name": "Chin-up",
+    "aliases": ["Underhand Pull-up"],
+    "pattern": "VERTICAL_PULL",
+    "primaryMuscles": ["LATS", "BICEPS"],
+    "secondaryMuscles": ["UPPER_BACK", "FOREARMS"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/LatissimusDorsi/BWChinup"
+  },
+  {
+    "id": "lat-pulldown",
+    "name": "Lat Pulldown",
+    "aliases": [],
+    "pattern": "VERTICAL_PULL",
+    "primaryMuscles": ["LATS", "BICEPS"],
+    "secondaryMuscles": ["UPPER_BACK", "REAR_DELT"],
+    "equipment": ["CABLE", "MACHINE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/LatissimusDorsi/CBLatPulldown"
+  },
+  {
+    "id": "walking-lunge",
+    "name": "Walking Lunge",
+    "aliases": [],
+    "pattern": "LUNGE",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS", "ADDUCTORS"],
+    "equipment": ["DUMBBELL", "BARBELL", "BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/DBLunge"
+  },
+  {
+    "id": "reverse-lunge",
+    "name": "Reverse Lunge",
+    "aliases": [],
+    "pattern": "LUNGE",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS"],
+    "equipment": ["DUMBBELL", "BARBELL", "BODYWEIGHT"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "step-up",
+    "name": "Step-up",
+    "aliases": [],
+    "pattern": "LUNGE",
+    "primaryMuscles": ["QUADS", "GLUTES"],
+    "secondaryMuscles": ["HAMSTRINGS"],
+    "equipment": ["DUMBBELL", "BODYWEIGHT"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "farmers-carry",
+    "name": "Farmer's Carry",
+    "aliases": ["Farmer's Walk"],
+    "pattern": "CARRY",
+    "primaryMuscles": ["FOREARMS", "TRAPS"],
+    "secondaryMuscles": ["UPPER_BACK", "ABS", "QUADS"],
+    "equipment": ["DUMBBELL", "BARBELL"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "suitcase-carry",
+    "name": "Suitcase Carry",
+    "aliases": [],
+    "pattern": "CARRY",
+    "primaryMuscles": ["OBLIQUES", "FOREARMS"],
+    "secondaryMuscles": ["ABS", "UPPER_BACK"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "plank",
+    "name": "Plank",
+    "aliases": ["Front Plank"],
+    "pattern": "CORE",
+    "primaryMuscles": ["ABS"],
+    "secondaryMuscles": ["OBLIQUES", "LOWER_BACK"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/RectusAbdominis/BWFrontPlank"
+  },
+  {
+    "id": "hanging-leg-raise",
+    "name": "Hanging Leg Raise",
+    "aliases": ["Knee Raise"],
+    "pattern": "CORE",
+    "primaryMuscles": ["ABS"],
+    "secondaryMuscles": ["OBLIQUES", "FOREARMS"],
+    "equipment": ["BODYWEIGHT"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/HipFlexors/BWHangingLegRaise"
+  },
+  {
+    "id": "ab-wheel-rollout",
+    "name": "Ab Wheel Rollout",
+    "aliases": [],
+    "pattern": "CORE",
+    "primaryMuscles": ["ABS"],
+    "secondaryMuscles": ["OBLIQUES", "LATS"],
+    "equipment": ["OTHER"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "pallof-press",
+    "name": "Pallof Press",
+    "aliases": [],
+    "pattern": "CORE",
+    "primaryMuscles": ["OBLIQUES", "ABS"],
+    "secondaryMuscles": [],
+    "equipment": ["CABLE", "BAND"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "barbell-curl",
+    "name": "Barbell Curl",
+    "aliases": ["BB Curl"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["BICEPS"],
+    "secondaryMuscles": ["FOREARMS"],
+    "equipment": ["BARBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Biceps/BBCurl"
+  },
+  {
+    "id": "dumbbell-curl",
+    "name": "Dumbbell Curl",
+    "aliases": ["DB Curl"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["BICEPS"],
+    "secondaryMuscles": ["FOREARMS"],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Biceps/DBCurl"
+  },
+  {
+    "id": "hammer-curl",
+    "name": "Hammer Curl",
+    "aliases": [],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["BICEPS", "FOREARMS"],
+    "secondaryMuscles": [],
+    "equipment": ["DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Brachialis/DBHammerCurl"
+  },
+  {
+    "id": "triceps-pushdown",
+    "name": "Triceps Pushdown",
+    "aliases": ["Cable Pushdown"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["TRICEPS"],
+    "secondaryMuscles": [],
+    "equipment": ["CABLE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Triceps/CBPushdown"
+  },
+  {
+    "id": "lateral-raise",
+    "name": "Lateral Raise",
+    "aliases": ["DB Side Raise"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["SIDE_DELT"],
+    "secondaryMuscles": ["FRONT_DELT", "TRAPS"],
+    "equipment": ["DUMBBELL", "CABLE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise"
+  },
+  {
+    "id": "calf-raise",
+    "name": "Calf Raise",
+    "aliases": ["Standing Calf Raise"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["CALVES"],
+    "secondaryMuscles": [],
+    "equipment": ["MACHINE", "BARBELL", "DUMBBELL"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Calves/LVStandingCalfRaise"
+  },
+  {
+    "id": "leg-curl",
+    "name": "Leg Curl",
+    "aliases": ["Hamstring Curl"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["HAMSTRINGS"],
+    "secondaryMuscles": [],
+    "equipment": ["MACHINE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Hamstrings/LVLyingLegCurl"
+  },
+  {
+    "id": "leg-extension",
+    "name": "Leg Extension",
+    "aliases": [],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["QUADS"],
+    "secondaryMuscles": [],
+    "equipment": ["MACHINE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/Quadriceps/LVLegExtension"
+  },
+  {
+    "id": "face-pull",
+    "name": "Face Pull",
+    "aliases": [],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["REAR_DELT", "UPPER_BACK"],
+    "secondaryMuscles": ["TRAPS"],
+    "equipment": ["CABLE", "BAND"],
+    "descriptionUrl": null
+  },
+  {
+    "id": "cable-fly",
+    "name": "Cable Fly",
+    "aliases": ["Cable Crossover"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["CHEST"],
+    "secondaryMuscles": ["FRONT_DELT"],
+    "equipment": ["CABLE"],
+    "descriptionUrl": "https://exrx.net/WeightExercises/PectoralSternal/CBStandingCableFly"
+  },
+  {
+    "id": "reverse-pec-deck",
+    "name": "Reverse Pec Deck",
+    "aliases": ["Rear Delt Machine"],
+    "pattern": "ISOLATION",
+    "primaryMuscles": ["REAR_DELT"],
+    "secondaryMuscles": ["UPPER_BACK"],
+    "equipment": ["MACHINE"],
+    "descriptionUrl": null
   }
 ]
