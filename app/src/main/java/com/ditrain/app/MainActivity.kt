@@ -72,8 +72,15 @@ class MainActivity : AppCompatActivity() {
         )
 
         rootContainer = FrameLayout(this)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
         setContentView(rootContainer)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rootContainer) { view, insets ->
+            val bars = insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars() or
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+            )
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            androidx.core.view.WindowInsetsCompat.CONSUMED
+        }
 
         renderHome()
 
