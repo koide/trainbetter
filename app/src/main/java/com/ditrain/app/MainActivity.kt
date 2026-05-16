@@ -123,16 +123,22 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun deleteRoutine(r: Routine) = lifecycleScope.launch {
-        val wasActive = r.id == appState.activeRoutineId
-        routineRepo.delete(r.id)
-        if (wasActive) {
-            appState = appState.copy(activeRoutineId = null, scheduledSessions = emptyList())
-            appStateRepo.save(appState)
-            activeRoutine = null
-            renderHome()
+    private fun deleteRoutine(r: Routine) {
+        lifecycleScope.launch {
+            val wasActive = r.id == appState.activeRoutineId
+            routineRepo.delete(r.id)
+            if (wasActive) {
+                appState = appState.copy(activeRoutineId = null, scheduledSessions = emptyList())
+                appStateRepo.save(appState)
+                activeRoutine = null
+                renderHome()
+            }
+            toast("Deleted \"${r.name}\".")
+            // Re-open the list so the user sees the deletion reflected. The
+            // RoutineList dialog dismissed itself in the Delete handler so we
+            // need to bring it back with the updated state.
+            openRoutineList()
         }
-        toast("Deleted \"${r.name}\".")
     }
 
     // ───────────── Import flow ─────────────

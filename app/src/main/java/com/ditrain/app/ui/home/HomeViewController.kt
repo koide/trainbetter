@@ -9,6 +9,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.ditrain.app.model.LoopMode
 import com.ditrain.app.model.Routine
 import com.ditrain.app.ui.ViewStyling
 
@@ -115,7 +116,7 @@ class HomeViewController(
         })
         addView(TextView(context).apply {
             text = "${routine.weeks.size} week${if (routine.weeks.size == 1) "" else "s"} · " +
-                    (if (routine.loopMode.name == "REPEAT") "repeats indefinitely" else "runs once")
+                    (if (routine.loopMode == LoopMode.REPEAT) "repeats indefinitely" else "runs once")
             textSize = 13f
             setTextColor(Color.parseColor("#CBD5E1"))
             setPadding(0, dp(4), 0, dp(14))

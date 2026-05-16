@@ -10,6 +10,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.ditrain.app.model.CardioBlock
+import com.ditrain.app.model.CardioKind
+import com.ditrain.app.model.ExerciseBlock
 import com.ditrain.app.model.LoadTarget
 import com.ditrain.app.model.LoopMode
 import com.ditrain.app.model.RepsTarget
@@ -109,8 +112,8 @@ class RoutinePreviewDialogController(
 
     private fun sessionCard(
         sessionName: String,
-        blocks: List<com.ditrain.app.model.ExerciseBlock>,
-        cardioBlocks: List<com.ditrain.app.model.CardioBlock>,
+        blocks: List<ExerciseBlock>,
+        cardioBlocks: List<CardioBlock>,
     ): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         background = ViewStyling.roundedBackground("#111827", "#334155", dp(2), dp(16).toFloat())
@@ -134,7 +137,7 @@ class RoutinePreviewDialogController(
             })
         }
         cardioBlocks.forEach { c ->
-            val kindLabel = if (c.activityKind.name == "OTHER" && !c.description.isNullOrBlank())
+            val kindLabel = if (c.activityKind == CardioKind.OTHER && !c.description.isNullOrBlank())
                 "Cardio: ${c.description}" else "Cardio: ${c.activityKind.name.lowercase()}"
             val mins = c.targetDurationMin?.let { " · ${it} min" } ?: ""
             val bpm = c.targetAvgBpm?.let { " · target ${it} bpm" } ?: ""

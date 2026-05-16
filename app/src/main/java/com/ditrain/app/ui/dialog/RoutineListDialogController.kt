@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.ditrain.app.model.LoopMode
 import com.ditrain.app.model.Routine
 import com.ditrain.app.ui.ViewStyling
 
@@ -88,7 +89,10 @@ class RoutineListDialogController(
                             "Past session logs that reference this routine remain in history."
                     )
                     .setNegativeButton("Cancel", null)
-                    .setPositiveButton("Delete") { _, _ -> onDelete(r) }
+                    .setPositiveButton("Delete") { _, _ ->
+                        dialog.dismiss()
+                        onDelete(r)
+                    }
                     .show()
             }
         }
@@ -106,7 +110,7 @@ class RoutineListDialogController(
             })
             addView(TextView(context).apply {
                 text = "${r.weeks.size} week${if (r.weeks.size == 1) "" else "s"} · " +
-                       (if (r.loopMode.name == "REPEAT") "repeats" else "runs once")
+                       (if (r.loopMode == LoopMode.REPEAT) "repeats" else "runs once")
                 textSize = 13f
                 setTextColor(Color.parseColor("#94A3B8"))
             })
