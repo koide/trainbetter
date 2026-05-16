@@ -15,7 +15,7 @@ import com.ditrain.app.ui.ViewStyling
 /**
  * The "⋮" overflow menu shown from Home. Each row is a labeled action that opens
  * a sub-dialog. Plan 6 adds Settings / Backup / Glossary / About; Plan 2 ships
- * only Routines + Import routine.
+ * Routines + Import routine + Browse exercises; Plan 2.5 adds Create routine.
  */
 class MainMenuDialogController(
     private val context: Context,
@@ -23,6 +23,7 @@ class MainMenuDialogController(
     private val onOpenRoutines: () -> Unit,
     private val onImportRoutine: () -> Unit,
     private val onBrowseExercises: () -> Unit,
+    private val onCreateRoutine: () -> Unit,
 ) {
     fun show() {
         val container = LinearLayout(context).apply {
@@ -36,17 +37,17 @@ class MainMenuDialogController(
             .setNegativeButton("Close", null)
             .create()
 
+        container.addView(row("Create routine", "Build a routine step-by-step through dialogs") {
+            dialog.dismiss(); onCreateRoutine()
+        })
         container.addView(row("Routines", "Browse, activate, or delete saved routines") {
-            dialog.dismiss()
-            onOpenRoutines()
+            dialog.dismiss(); onOpenRoutines()
         })
         container.addView(row("Import routine", "Paste JSON, pick a file, or load a bundled example") {
-            dialog.dismiss()
-            onImportRoutine()
+            dialog.dismiss(); onImportRoutine()
         })
         container.addView(row("Browse exercises", "See the bundled exercise catalog and their IDs") {
-            dialog.dismiss()
-            onBrowseExercises()
+            dialog.dismiss(); onBrowseExercises()
         })
 
         dialog.show()

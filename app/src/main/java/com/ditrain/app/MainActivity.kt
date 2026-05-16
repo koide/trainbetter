@@ -105,6 +105,7 @@ class MainActivity : AppCompatActivity() {
             onOpenRoutines = { openRoutineList() },
             onImportRoutine = { openImport() },
             onBrowseExercises = { openExerciseBrowser() },
+            onCreateRoutine = { openBuilder() },
         ).show()
     }
 
@@ -121,6 +122,59 @@ class MainActivity : AppCompatActivity() {
             onDetail = { ex -> detail.show(ex) },
             title = "Exercise catalog",
         ).show()
+    }
+
+    private fun openBuilder() {
+        com.ditrain.app.ui.dialog.builder.RoutineMetaDialogController(
+            context = this, dp = dp,
+        ) { meta ->
+            val draft = com.ditrain.app.model.Routine(
+                id = java.util.UUID.randomUUID().toString().take(8),
+                name = meta.name,
+                description = meta.description,
+                loopMode = meta.loopMode,
+                weeks = List(meta.weekCount) { i ->
+                    com.ditrain.app.model.Week(label = "Week ${i + 1}", sessions = emptyList())
+                },
+            )
+            editWeek(draft, weekIndex = 0)
+        }.show()
+    }
+
+    private fun editWeek(draft: com.ditrain.app.model.Routine, weekIndex: Int) {
+        val prev: com.ditrain.app.model.Week? = if (weekIndex > 0) draft.weeks[weekIndex - 1] else null
+        com.ditrain.app.ui.dialog.builder.WeekEditorDialogController(
+            context = this, catalog = catalog, dp = dp,
+        ) { week ->
+            val updatedWeeks = draft.weeks.toMutableList().also { it[weekIndex] = week }
+            val updated = draft.copy(weeks = updatedWeeks)
+            if (weekIndex + 1 < updated.weeks.size) editWeek(updated, weekIndex + 1)
+            else builderReview(updated)
+        }.show(
+            weekIndex = weekIndex,
+            totalWeeks = draft.weeks.size,
+            initial = draft.weeks[weekIndex].takeIf { it.sessions.isNotEmpty() },
+            previousWeek = prev,
+        )
+    }
+
+    private fun builderReview(draft: com.ditrain.app.model.Routine) {
+        RoutinePreviewDialogController(this, catalog, dp).show(
+            routine = draft,
+            mode = RoutinePreviewDialogController.Mode.IMPORT,
+            onPrimary = { saveBuiltRoutine(draft, activate = true) },
+            onSecondary = { saveBuiltRoutine(draft, activate = false) },
+            primaryLabel = "Save & activate",
+            secondaryLabel = "Save only",
+        )
+    }
+
+    private fun saveBuiltRoutine(routine: com.ditrain.app.model.Routine, activate: Boolean) {
+        lifecycleScope.launch {
+            routineRepo.save(routine)
+            if (activate) startActivation(routine)
+            else toast("Saved \"${routine.name}\".")
+        }
     }
 
     private fun openRoutineList() = lifecycleScope.launch {
