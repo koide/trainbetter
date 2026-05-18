@@ -145,12 +145,28 @@ class MainActivity : AppCompatActivity() {
         val prev: com.ditrain.app.model.Week? = if (weekIndex > 0) draft.weeks[weekIndex - 1] else null
         com.ditrain.app.ui.dialog.builder.WeekEditorDialogController(
             context = this, catalog = catalog, dp = dp,
-        ) { week ->
-            val updatedWeeks = draft.weeks.toMutableList().also { it[weekIndex] = week }
-            val updated = draft.copy(weeks = updatedWeeks)
-            if (weekIndex + 1 < updated.weeks.size) editWeek(updated, weekIndex + 1)
-            else builderReview(updated)
-        }.show(
+            onSave = { week ->
+                val updatedWeeks = draft.weeks.toMutableList().also { it[weekIndex] = week }
+                val updated = draft.copy(weeks = updatedWeeks)
+                if (weekIndex + 1 < updated.weeks.size) editWeek(updated, weekIndex + 1)
+                else builderReview(updated)
+            },
+            onApplyToAllRemaining = { week ->
+                // Propagate this week's content to every remaining slot, regenerating
+                // session ids so each week has unique session identifiers.
+                val updatedWeeks = draft.weeks.toMutableList()
+                for (i in weekIndex until draft.weeks.size) {
+                    val regeneratedSessions = week.sessions.map { s ->
+                        s.copy(id = java.util.UUID.randomUUID().toString().take(8))
+                    }
+                    updatedWeeks[i] = com.ditrain.app.model.Week(
+                        label = if (i == weekIndex) week.label else "Week ${i + 1}",
+                        sessions = regeneratedSessions,
+                    )
+                }
+                builderReview(draft.copy(weeks = updatedWeeks))
+            },
+        ).show(
             weekIndex = weekIndex,
             totalWeeks = draft.weeks.size,
             initial = draft.weeks[weekIndex].takeIf { it.sessions.isNotEmpty() },

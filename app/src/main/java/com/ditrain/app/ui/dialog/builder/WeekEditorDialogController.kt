@@ -23,6 +23,7 @@ class WeekEditorDialogController(
     private val catalog: ExerciseCatalog,
     private val dp: (Int) -> Int,
     private val onSave: (Week) -> Unit,
+    private val onApplyToAllRemaining: ((Week) -> Unit)? = null,
 ) {
 
     fun show(
@@ -100,21 +101,44 @@ class WeekEditorDialogController(
 
         renderSessions()
 
-        AlertDialog.Builder(context)
+        val isLastWeek = weekIndex + 1 >= totalWeeks
+        val canApplyToRest = !isLastWeek && onApplyToAllRemaining != null
+        val builder = AlertDialog.Builder(context)
             .setTitle("Build week ${weekIndex + 1}")
             .setView(ScrollView(context).apply { addView(content) })
             .setNegativeButton("Cancel", null)
-            .setPositiveButton(if (weekIndex + 1 < totalWeeks) "Next ▸" else "Review ▸") { _, _ ->
+            .setPositiveButton(if (isLastWeek) "Review ▸" else "Next ▸", null)
+        if (canApplyToRest) {
+            builder.setNeutralButton("Apply to all remaining weeks ▸", null)
+        }
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (sessions.isEmpty()) {
                     AlertDialog.Builder(context).setTitle("Add at least one session")
                         .setMessage("Every week needs at least one session.")
                         .setPositiveButton("OK", null).show()
-                    return@setPositiveButton
+                    return@setOnClickListener
                 }
                 val finalLabel = labelEdit.text.toString().trim().ifEmpty { "Week ${weekIndex + 1}" }
                 onSave(Week(label = finalLabel, sessions = sessions.toList()))
+                dialog.dismiss()
             }
-            .show()
+            if (canApplyToRest) {
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                    if (sessions.isEmpty()) {
+                        AlertDialog.Builder(context).setTitle("Add at least one session")
+                            .setMessage("Every week needs at least one session.")
+                            .setPositiveButton("OK", null).show()
+                        return@setOnClickListener
+                    }
+                    val finalLabel = labelEdit.text.toString().trim().ifEmpty { "Week ${weekIndex + 1}" }
+                    onApplyToAllRemaining!!.invoke(Week(label = finalLabel, sessions = sessions.toList()))
+                    dialog.dismiss()
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun sessionRow(idx: Int, session: SessionTemplate, list: MutableList<SessionTemplate>, refresh: () -> Unit): View =
