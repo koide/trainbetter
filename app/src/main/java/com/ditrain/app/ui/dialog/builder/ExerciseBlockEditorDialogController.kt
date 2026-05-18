@@ -108,29 +108,34 @@ class ExerciseBlockEditorDialogController(
 
         renderSets()
 
-        AlertDialog.Builder(context)
+        val dialog = AlertDialog.Builder(context)
             .setTitle(if (initial == null) "New exercise block" else "Edit exercise block")
             .setView(ScrollView(context).apply { addView(container) })
             .setNegativeButton("Cancel", null)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton("Save", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val exId = exerciseId
                 if (exId == null) {
                     AlertDialog.Builder(context).setTitle("Pick an exercise first")
                         .setPositiveButton("OK", null).show()
-                    return@setPositiveButton
+                    return@setOnClickListener
                 }
                 if (sets.isEmpty()) {
                     AlertDialog.Builder(context).setTitle("Add at least one set")
                         .setPositiveButton("OK", null).show()
-                    return@setPositiveButton
+                    return@setOnClickListener
                 }
                 onSave(ExerciseBlock(
                     exerciseId = exId,
                     sets = sets.toList(),
                     notes = notesEdit.text.toString().ifBlank { null },
                 ))
+                dialog.dismiss()
             }
-            .show()
+        }
+        dialog.show()
     }
 
     private fun setRow(idx: Int, set: SetPrescription, sets: MutableList<SetPrescription>, refresh: () -> Unit): View =
