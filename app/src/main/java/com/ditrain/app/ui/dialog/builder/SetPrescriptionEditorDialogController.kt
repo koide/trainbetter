@@ -152,20 +152,33 @@ class SetPrescriptionEditorDialogController(
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(8), dp(14), dp(8))
-            addView(label("Type"))
+            addView(labelWithHelp("Type", listOf(
+                "Myo-rep" to "An activation set taken to high effort, then several short-rest mini-sets at the same weight. Stored as a single myo-rep set, not separate sets."
+            )))
             addView(typeGroup)
-            addView(label("Reps target"))
+            addView(labelWithHelp("Reps target", listOf(
+                "AMRAP" to "As Many Reps As Possible. Perform reps to failure or near-failure with the prescribed weight.",
+                "AMRAP≥" to "AMRAP with a minimum. E.g., AMRAP≥5 means hit at least 5 reps, but go beyond if you can."
+            )))
             addView(repsGroup)
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 addView(repsA, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginEnd = dp(6) })
                 addView(repsB, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dp(6) })
             })
-            addView(label("Load target"))
+            addView(labelWithHelp("Load target", listOf(
+                "%1RM" to "Percentage of one-rep max. 0.80 = 80% of your max for that exercise. App resolves to a kg value using your latest e1RM.",
+                "RPE" to "Rate of Perceived Exertion (1–10). 10 = absolute max, 8 = ~2 reps in reserve.",
+                "+/- kg" to "Relative load. E.g., +2.5 kg means add 2.5 kg to whatever you used last time on this exercise.",
+                "Open" to "No load prescribed — use your judgment for this set."
+            )))
             addView(loadGroup)
             addView(loadValue)
             addView(myoFields)
-            addView(label("Optional"))
+            addView(labelWithHelp("Optional", listOf(
+                "Tempo" to "Speed of each rep, in seconds: eccentric-pause-concentric. E.g., 3-1-1 = 3 sec down, 1 sec pause, 1 sec up.",
+                "RPE target" to "Per-set effort cap independent of the load type. Stop the set when you'd hit this RPE."
+            )))
             addView(rpeTarget); addView(restSec); addView(tempo); addView(notes)
         }
 
@@ -278,5 +291,34 @@ class SetPrescriptionEditorDialogController(
             is LoadTarget.RpeTarget -> rpe
             is LoadTarget.RelativeToLast -> rel
             LoadTarget.Open -> open
+        }
+
+    private fun helpDialog(term: String, definition: String) {
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle(term)
+            .setMessage(definition)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun helpIcon(term: String, definition: String): android.widget.TextView =
+        android.widget.TextView(context).apply {
+            text = " ⓘ "
+            textSize = 12f
+            setTextColor(android.graphics.Color.parseColor("#60A5FA"))
+            setPadding(dp(4), dp(2), dp(4), dp(2))
+            setOnClickListener { helpDialog(term, definition) }
+        }
+
+    private fun labelWithHelp(text: String, helps: List<Pair<String, String>>): android.view.View =
+        LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(10), 0, dp(4))
+            addView(TextView(context).apply {
+                this.text = text
+                textSize = 12f
+                setTextColor(android.graphics.Color.parseColor("#CBD5E1"))
+            })
+            helps.forEach { (term, def) -> addView(helpIcon(term, def)) }
         }
 }
