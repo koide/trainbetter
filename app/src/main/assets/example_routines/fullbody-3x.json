@@ -1,0 +1,101 @@
+{
+  "id": "fullbody-3x",
+  "name": "Full-body 3x/week",
+  "description": "Three full-body sessions alternating squat / deadlift / front-squat focus. Each day hits all major movement patterns. Default schedule Mon/Wed/Fri.",
+  "author": "DiTrain bundled templates",
+  "schemaVersion": 1,
+  "loopMode": "REPEAT",
+  "defaultWeeklyPattern": [0, 2, 4],
+  "weeks": [
+    {
+      "label": "Week 1",
+      "sessions": [
+        {
+          "id": "fb3-a",
+          "name": "Day A — Squat focus",
+          "blocks": [
+            { "exerciseId": "barbell-back-squat", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180}
+            ]},
+            { "exerciseId": "barbell-bench-press", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":150},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":150},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":150}
+            ]},
+            { "exerciseId": "barbell-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "pull-up", "sets": [
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "fb3-b",
+          "name": "Day B — Deadlift focus",
+          "blocks": [
+            { "exerciseId": "barbell-deadlift", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":3},"load":{"type":"pct_1rm","pct":0.85},"rest":240},
+              {"type":"straight","reps":{"type":"fixed","reps":3},"load":{"type":"pct_1rm","pct":0.85},"rest":240},
+              {"type":"straight","reps":{"type":"fixed","reps":3},"load":{"type":"pct_1rm","pct":0.85},"rest":240}
+            ]},
+            { "exerciseId": "barbell-overhead-press", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.75},"rest":150},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.75},"rest":150},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.75},"rest":150}
+            ]},
+            { "exerciseId": "cable-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "hanging-leg-raise", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rest":90}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "fb3-c",
+          "name": "Day C — Volume / variation",
+          "blocks": [
+            { "exerciseId": "barbell-front-squat", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.70},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.70},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.70},"rest":180}
+            ]},
+            { "exerciseId": "incline-dumbbell-press", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "t-bar-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "barbell-curl", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90}
+            ]},
+            { "exerciseId": "triceps-pushdown", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.0,"rest":90}
+            ]}
+          ],
+          "cardioBlocks": []
+        }
+      ]
+    }
+  ]
+}

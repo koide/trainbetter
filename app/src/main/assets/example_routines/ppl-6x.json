@@ -1,0 +1,215 @@
+{
+  "id": "ppl-6x",
+  "name": "Push / Pull / Legs 6x/week",
+  "description": "Six-day push-pull-legs split. Push A, Pull A, Legs A early in the week; Push B, Pull B, Legs B as volume/variation days. Default Mon–Sat.",
+  "author": "DiTrain bundled templates",
+  "schemaVersion": 1,
+  "loopMode": "REPEAT",
+  "defaultWeeklyPattern": [0, 1, 2, 3, 4, 5],
+  "weeks": [
+    {
+      "label": "Week 1",
+      "sessions": [
+        {
+          "id": "ppl-push-a",
+          "name": "Push A (heavy chest)",
+          "blocks": [
+            { "exerciseId": "barbell-bench-press", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.82},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.82},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.82},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.82},"rest":180}
+            ]},
+            { "exerciseId": "barbell-overhead-press", "sets": [
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150}
+            ]},
+            { "exerciseId": "incline-dumbbell-press", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90}
+            ]},
+            { "exerciseId": "lateral-raise", "sets": [
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60}
+            ]},
+            { "exerciseId": "triceps-pushdown", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rpeTarget":8.5,"rest":75}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "ppl-pull-a",
+          "name": "Pull A (heavy back)",
+          "blocks": [
+            { "exerciseId": "barbell-deadlift", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":240},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":240},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":240}
+            ]},
+            { "exerciseId": "pull-up", "sets": [
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"amrap"},"load":{"type":"open"},"rest":120}
+            ]},
+            { "exerciseId": "barbell-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "face-pull", "sets": [
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60}
+            ]},
+            { "exerciseId": "barbell-curl", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "ppl-legs-a",
+          "name": "Legs A (squat focus)",
+          "blocks": [
+            { "exerciseId": "barbell-back-squat", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.80},"rest":180}
+            ]},
+            { "exerciseId": "romanian-deadlift", "sets": [
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150}
+            ]},
+            { "exerciseId": "walking-lunge", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":10},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"fixed","reps":10},"load":{"type":"open"},"rest":120},
+              {"type":"straight","reps":{"type":"fixed","reps":10},"load":{"type":"open"},"rest":120}
+            ]},
+            { "exerciseId": "leg-curl", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75}
+            ]},
+            { "exerciseId": "calf-raise", "sets": [
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "ppl-push-b",
+          "name": "Push B (shoulder focus)",
+          "blocks": [
+            { "exerciseId": "barbell-overhead-press", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.78},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.78},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.78},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.78},"rest":180}
+            ]},
+            { "exerciseId": "incline-barbell-bench", "sets": [
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":8},"load":{"type":"open"},"rpeTarget":8.0,"rest":150}
+            ]},
+            { "exerciseId": "cable-fly", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":15},"load":{"type":"open"},"rest":75}
+            ]},
+            { "exerciseId": "lateral-raise", "sets": [
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":60}
+            ]},
+            { "exerciseId": "skullcrusher", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":75}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "ppl-pull-b",
+          "name": "Pull B (lat / biceps focus)",
+          "blocks": [
+            { "exerciseId": "t-bar-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":150},
+              {"type":"straight","reps":{"type":"range","min":6,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":150}
+            ]},
+            { "exerciseId": "lat-pulldown", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":8,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90}
+            ]},
+            { "exerciseId": "chest-supported-row", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":75}
+            ]},
+            { "exerciseId": "hammer-curl", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":60},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rest":60}
+            ]},
+            { "exerciseId": "ez-bar-curl", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":60},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":60},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":60}
+            ]}
+          ],
+          "cardioBlocks": []
+        },
+        {
+          "id": "ppl-legs-b",
+          "name": "Legs B (volume / posterior)",
+          "blocks": [
+            { "exerciseId": "barbell-front-squat", "sets": [
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.72},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.72},"rest":180},
+              {"type":"straight","reps":{"type":"fixed","reps":5},"load":{"type":"pct_1rm","pct":0.72},"rest":180}
+            ]},
+            { "exerciseId": "hip-thrust", "sets": [
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120},
+              {"type":"straight","reps":{"type":"range","min":8,"max":10},"load":{"type":"open"},"rpeTarget":8.0,"rest":120}
+            ]},
+            { "exerciseId": "leg-press", "sets": [
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90},
+              {"type":"straight","reps":{"type":"range","min":10,"max":12},"load":{"type":"open"},"rpeTarget":8.5,"rest":90}
+            ]},
+            { "exerciseId": "leg-extension", "sets": [
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"range","min":12,"max":15},"load":{"type":"open"},"rest":75}
+            ]},
+            { "exerciseId": "hanging-leg-raise", "sets": [
+              {"type":"straight","reps":{"type":"amrap_min","min":8},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"amrap_min","min":8},"load":{"type":"open"},"rest":75},
+              {"type":"straight","reps":{"type":"amrap_min","min":8},"load":{"type":"open"},"rest":75}
+            ]}
+          ],
+          "cardioBlocks": []
+        }
+      ]
+    }
+  ]
+}

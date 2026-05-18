@@ -227,10 +227,30 @@ class MainActivity : AppCompatActivity() {
             dp = dp,
             bundledExamples = listOf(
                 RoutineImportDialogController.BundledExample(
+                    assetPath = "example_routines/fullbody-3x.json",
+                    displayName = "Full-body 3x/week",
+                    description = "3-day full-body, alternating squat / deadlift / front-squat focus. Mon/Wed/Fri.",
+                ),
+                RoutineImportDialogController.BundledExample(
+                    assetPath = "example_routines/upper-lower-4x.json",
+                    displayName = "Upper/Lower 4x/week",
+                    description = "Classic upper-lower split with heavy and volume days. Mon/Tue/Thu/Fri.",
+                ),
+                RoutineImportDialogController.BundledExample(
+                    assetPath = "example_routines/ppl-6x.json",
+                    displayName = "Push/Pull/Legs 6x/week",
+                    description = "Six-day push-pull-legs with A and B variation days. Mon–Sat.",
+                ),
+                RoutineImportDialogController.BundledExample(
+                    assetPath = "example_routines/fullbody-cardio-2x2.json",
+                    displayName = "Full-body + Cardio (2+2)",
+                    description = "2 full-body days + 2 cardio days. Mon (strength) / Tue (cardio) / Thu / Fri.",
+                ),
+                RoutineImportDialogController.BundledExample(
                     assetPath = "example_routines/simple-ab-template.json",
                     displayName = "Simple A/B Template",
-                    description = "Two full-body sessions that cycle Mon/Wed/Fri.",
-                )
+                    description = "Two-day alternating full-body. Minimal starting point.",
+                ),
             ),
             loadBundledExample = { path ->
                 assets.open(path).bufferedReader().use { it.readText() }
