@@ -43,10 +43,21 @@ class RoutinePreviewDialogController(
         onSecondary: () -> Unit,
         primaryLabel: String,
         secondaryLabel: String,
+        titleOverride: String? = null,
+        introText: String? = null,
     ) {
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(8), dp(14), dp(8))
+
+            if (introText != null) {
+                addView(TextView(context).apply {
+                    text = introText
+                    textSize = 13f
+                    setTextColor(android.graphics.Color.parseColor("#FDE68A"))
+                    setPadding(0, 0, 0, dp(10))
+                })
+            }
 
             if (mode == Mode.IMPORT) {
                 addView(android.widget.TextView(context).apply {
@@ -92,7 +103,7 @@ class RoutinePreviewDialogController(
         }
 
         AlertDialog.Builder(context)
-            .setTitle(if (mode == Mode.IMPORT) "Preview import" else "Routine")
+            .setTitle(titleOverride ?: if (mode == Mode.IMPORT) "Preview import" else "Routine")
             .setView(ScrollView(context).apply { addView(content) })
             .setNeutralButton(secondaryLabel) { _, _ -> onSecondary() }
             .setPositiveButton(primaryLabel) { _, _ -> onPrimary() }

@@ -166,6 +166,8 @@ class MainActivity : AppCompatActivity() {
             onSecondary = { saveBuiltRoutine(draft, activate = false) },
             primaryLabel = "Save & activate",
             secondaryLabel = "Save only",
+            titleOverride = "Review and save",
+            introText = "Review your routine below, then tap Save & activate (recommended) or Save only.",
         )
     }
 
