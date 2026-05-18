@@ -122,7 +122,13 @@ class HomeViewController(
             setPadding(0, dp(4), 0, dp(14))
         })
         addView(TextView(context).apply {
-            text = "Session execution arrives in the next milestone. For now you can browse the routine via Menu → Routines."
+            text = "▸ Coming next: Start workout (logging sets, rest timer, finish session)"
+            textSize = 13f
+            setTextColor(Color.parseColor("#FDE68A"))
+            setPadding(0, 0, 0, dp(6))
+        })
+        addView(TextView(context).apply {
+            text = "For now: tap ⋮ → Routines → View to inspect the routine, or Edit to tweak it."
             textSize = 12f
             setTextColor(Color.parseColor("#94A3B8"))
         })
