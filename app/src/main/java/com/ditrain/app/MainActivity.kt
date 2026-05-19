@@ -189,9 +189,57 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveBuiltRoutine(routine: com.ditrain.app.model.Routine, activate: Boolean) {
         lifecycleScope.launch {
+            val wasActive = routine.id == appState.activeRoutineId
             routineRepo.save(routine)
-            if (activate) startActivation(routine)
-            else toast("Saved \"${routine.name}\".")
+            if (activate) {
+                startActivation(routine)
+            } else if (wasActive) {
+                // The routine was edited but the user chose "Save only" — keep the
+                // existing schedule. The user can re-activate later to re-lay out
+                // the schedule (since session ids may have changed).
+                activeRoutine = routine
+                renderHome()
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Saved")
+                    .setMessage("\"${routine.name}\" updated. Your existing schedule still references this routine; if session content changed, re-activate to re-layout the schedule from today.")
+                    .setPositiveButton("OK", null)
+                    .show()
+            } else {
+                toast("Saved \"${routine.name}\".")
+            }
+        }
+    }
+
+    private fun openEditor(existing: com.ditrain.app.model.Routine) {
+        com.ditrain.app.ui.dialog.builder.RoutineMetaDialogController(
+            context = this, dp = dp,
+        ) { meta ->
+            // Migrate the existing weeks list to the new week count: keep up to N
+            // existing weeks, pad with empty weeks if increasing.
+            val adjustedWeeks = adjustWeekCount(existing.weeks, meta.weekCount)
+            val draft = existing.copy(
+                name = meta.name,
+                description = meta.description,
+                loopMode = meta.loopMode,
+                weeks = adjustedWeeks,
+            )
+            editWeek(draft, weekIndex = 0)
+        }.show(initial = com.ditrain.app.ui.dialog.builder.RoutineMetaDialogController.RoutineMeta(
+            name = existing.name,
+            description = existing.description,
+            loopMode = existing.loopMode,
+            weekCount = existing.weeks.size,
+        ))
+    }
+
+    private fun adjustWeekCount(
+        existing: List<com.ditrain.app.model.Week>,
+        target: Int,
+    ): List<com.ditrain.app.model.Week> = when {
+        target == existing.size -> existing
+        target < existing.size -> existing.take(target)
+        else -> existing + List(target - existing.size) { i ->
+            com.ditrain.app.model.Week(label = "Week ${existing.size + i + 1}", sessions = emptyList())
         }
     }
 
@@ -203,6 +251,7 @@ class MainActivity : AppCompatActivity() {
             dp = dp,
             activeRoutineId = appState.activeRoutineId,
             onView = { r -> openRoutinePreviewForView(r) },
+            onEdit = { r -> openEditor(r) },
             onActivate = { r -> startActivation(r) },
             onDelete = { r -> deleteRoutine(r) },
         ).show(routines)

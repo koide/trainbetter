@@ -25,6 +25,7 @@ class RoutineListDialogController(
     private val dp: (Int) -> Int,
     private val activeRoutineId: String?,
     private val onView: (Routine) -> Unit,
+    private val onEdit: (Routine) -> Unit,
     private val onActivate: (Routine) -> Unit,
     private val onDelete: (Routine) -> Unit,
 ) {
@@ -64,6 +65,14 @@ class RoutineListDialogController(
                 ViewStyling.roundedBackground(fill, stroke, dp(2), radius)
             },
         ).apply { setOnClickListener { onView(r) } }
+
+        val editBtn = ViewStyling.actionButton(
+            context = context, label = "Edit",
+            fillColor = "#0EA5E9", compact = true, dp = dp,
+            roundedBackground = { fill, stroke, radius ->
+                ViewStyling.roundedBackground(fill, stroke, dp(2), radius)
+            },
+        ).apply { setOnClickListener { onEdit(r) } }
 
         val activateBtn = ViewStyling.actionButton(
             context = context,
@@ -122,9 +131,14 @@ class RoutineListDialogController(
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 addView(viewBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginEnd = dp(6) })
-                addView(activateBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dp(3); marginEnd = dp(3) })
-                addView(deleteBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dp(6) })
+                addView(editBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dp(6) })
             }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(12) })
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(activateBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginEnd = dp(6) })
+                addView(deleteBtn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dp(6) })
+            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(8) })
 
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(10) }
         }

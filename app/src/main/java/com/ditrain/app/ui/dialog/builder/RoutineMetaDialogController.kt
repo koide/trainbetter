@@ -27,25 +27,30 @@ class RoutineMetaDialogController(
         val weekCount: Int,
     )
 
-    fun show() {
+    fun show(initial: RoutineMeta? = null) {
         val nameEdit = EditText(context).apply {
             hint = "routine name (e.g. My Hypertrophy Block)"
             setTextColor(Color.WHITE); setHintTextColor(Color.parseColor("#94A3B8"))
+            if (initial != null) setText(initial.name)
         }
         val descEdit = EditText(context).apply {
             hint = "description (optional)"
             setTextColor(Color.WHITE); setHintTextColor(Color.parseColor("#94A3B8"))
+            if (initial != null) setText(initial.description.orEmpty())
         }
+        val isOnce = initial?.loopMode == LoopMode.ONCE
         val onceRb = RadioButton(context).apply {
             text = "Runs once (mesocycle)"; setTextColor(Color.WHITE); id = View.generateViewId()
+            isChecked = isOnce
         }
         val repeatRb = RadioButton(context).apply {
-            text = "Repeats indefinitely (template)"; setTextColor(Color.WHITE); isChecked = true; id = View.generateViewId()
+            text = "Repeats indefinitely (template)"; setTextColor(Color.WHITE); id = View.generateViewId()
+            isChecked = !isOnce
         }
         val loopGroup = RadioGroup(context).apply { orientation = RadioGroup.VERTICAL; addView(onceRb); addView(repeatRb) }
         val weekCountEdit = EditText(context).apply {
             hint = "number of weeks (1..52)"
-            setText("1")
+            setText((initial?.weekCount ?: 1).toString())
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             setTextColor(Color.WHITE); setHintTextColor(Color.parseColor("#94A3B8"))
         }
@@ -70,7 +75,7 @@ class RoutineMetaDialogController(
         }
 
         AlertDialog.Builder(context)
-            .setTitle("New routine — step 1 of 2")
+            .setTitle(if (initial == null) "New routine — step 1 of 2" else "Edit routine — step 1 of 2")
             .setView(ScrollView(context).apply { addView(content) })
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Next ▸") { _, _ ->
