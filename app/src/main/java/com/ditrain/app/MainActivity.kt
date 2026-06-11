@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var routineRepo: RoutineRepository
     private lateinit var appStateRepo: AppStateRepository
+    private lateinit var sessionLogRepo: com.ditrain.app.storage.SessionLogRepository
     private lateinit var catalog: ExerciseCatalog
 
     private var appState: AppState = AppState(null, emptyList(), com.ditrain.app.model.Settings())
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
 
         routineRepo = RoutineRepository(filesDir)
         appStateRepo = AppStateRepository(filesDir)
+        sessionLogRepo = com.ditrain.app.storage.SessionLogRepository(filesDir)
         catalog = ExerciseCatalog.fromAssets(
             assets.open("exercises.json"),
             File(filesDir, "custom_exercises.json"),
@@ -69,6 +71,7 @@ class MainActivity : AppCompatActivity() {
             dp = dp,
             onMenuClick = { openMainMenu() },
             onImportNow = { openImport() },
+            onStartOrResumeSession = { openSession() },
         )
 
         rootContainer = FrameLayout(this)
@@ -93,7 +96,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderHome() {
         rootContainer.removeAllViews()
-        rootContainer.addView(home.buildView(activeRoutine))
+        val today = computeTodayCard()
+        rootContainer.addView(home.buildView(activeRoutine, today))
+    }
+
+    private fun computeTodayCard(): com.ditrain.app.ui.home.HomeViewController.TodayCard? {
+        val routine = activeRoutine ?: return null
+        val todayIso = java.time.LocalDate.now().toString()
+        val candidate = appState.scheduledSessions
+            .filter { it.date <= todayIso }
+            .minByOrNull { it.date } ?: return null
+
+        val week = routine.weeks.getOrNull(candidate.weekIndex) ?: return null
+        val template = week.sessions.firstOrNull { it.id == candidate.sessionTemplateId } ?: return null
+        val resuming = candidate.sessionLogId != null
+        return com.ditrain.app.ui.home.HomeViewController.TodayCard(
+            sessionTemplateName = template.name,
+            weekLabel = week.label,
+            scheduledDate = candidate.date,
+            resuming = resuming,
+        )
     }
 
     // ───────────── Menu flow ─────────────
@@ -408,6 +430,148 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton("OK", null)
                 .show()
         }
+    }
+
+    // ───────────── Session execution flow ─────────────
+
+    private var sessionController: com.ditrain.app.ui.session.SessionViewController? = null
+
+    private fun openSession() = lifecycleScope.launch {
+        sessionHistoryCache = null
+        val routine = activeRoutine ?: return@launch
+        val todayIso = java.time.LocalDate.now().toString()
+        val scheduled = appState.scheduledSessions
+            .filter { it.date <= todayIso }
+            .minByOrNull { it.date } ?: return@launch
+        val week = routine.weeks.getOrNull(scheduled.weekIndex) ?: return@launch
+        val template = week.sessions.firstOrNull { it.id == scheduled.sessionTemplateId } ?: return@launch
+
+        val existingLogId = scheduled.sessionLogId
+        val wasNewSession = existingLogId == null
+        val initialLog = if (existingLogId != null) {
+            sessionLogRepo.loadAll().firstOrNull { it.id == existingLogId }
+                ?: buildFreshSessionLog(routine, scheduled, template)
+        } else {
+            buildFreshSessionLog(routine, scheduled, template)
+        }
+
+        if (existingLogId == null) {
+            val updatedScheduled = appState.scheduledSessions.map {
+                if (it === scheduled) it.copy(sessionLogId = initialLog.id) else it
+            }
+            appState = appState.copy(scheduledSessions = updatedScheduled)
+            appStateRepo.save(appState)
+            sessionLogRepo.upsert(initialLog)
+        }
+
+        val state = com.ditrain.app.ui.session.SessionState(initialLog)
+        val controller = com.ditrain.app.ui.session.SessionViewController(
+            context = this@MainActivity,
+            catalog = catalog,
+            dp = dp,
+            settings = appState.settings,
+            nowIso = { java.time.Instant.now().toString() },
+            resolveLastTopWeightKg = { exerciseId -> lastTopWeightKg(exerciseId) },
+            resolveLatestE1rmKg = { exerciseId -> latestE1rmKg(exerciseId) },
+            onMutated = { lifecycleScope.launch { sessionLogRepo.upsert(state.log) } },
+            onAbortSaveInProgress = { closeSession() },
+            onAbortDiscard = { lifecycleScope.launch { discardSession(initialLog.id, clearSchedule = wasNewSession) } },
+            onFinish = { lifecycleScope.launch { finishSession(state) } },
+        )
+        sessionController = controller
+        rootContainer.removeAllViews()
+        rootContainer.addView(controller.buildView(routine, template, state))
+    }
+
+    private fun buildFreshSessionLog(
+        routine: com.ditrain.app.model.Routine,
+        scheduled: com.ditrain.app.model.ScheduledSession,
+        template: com.ditrain.app.model.SessionTemplate,
+    ): com.ditrain.app.model.SessionLog {
+        val nowIso = java.time.Instant.now().toString()
+        return com.ditrain.app.model.SessionLog(
+            id = java.util.UUID.randomUUID().toString(),
+            routineId = routine.id,
+            weekIndex = scheduled.weekIndex,
+            sessionTemplateId = template.id,
+            scheduledDate = scheduled.date,
+            performedDate = java.time.LocalDate.now().toString(),
+            startedAt = nowIso,
+            completedAt = null,
+            executed = template.blocks.map {
+                com.ditrain.app.model.ExecutedExercise(exerciseId = it.exerciseId)
+            },
+            cardioExecuted = emptyList(),
+        )
+    }
+
+    private fun closeSession() {
+        sessionController = null
+        renderHome()
+    }
+
+    private suspend fun discardSession(sessionId: String, clearSchedule: Boolean) {
+        sessionLogRepo.delete(sessionId)
+        if (clearSchedule) {
+            val updated = appState.scheduledSessions.map {
+                if (it.sessionLogId == sessionId) it.copy(sessionLogId = null) else it
+            }
+            appState = appState.copy(scheduledSessions = updated)
+            appStateRepo.save(appState)
+        }
+        closeSession()
+    }
+
+    private suspend fun finishSession(state: com.ditrain.app.ui.session.SessionState) {
+        state.markCompleted(java.time.Instant.now().toString())
+        sessionLogRepo.upsert(state.log)
+        val finishedLogId = state.log.id
+        val updated = appState.scheduledSessions.filterNot { it.sessionLogId == finishedLogId }
+        appState = appState.copy(scheduledSessions = updated)
+        appStateRepo.save(appState)
+        closeSession()
+        toast("Session finished. ${state.log.executed.sumOf { it.sets.size }} sets logged.")
+    }
+
+    private var sessionHistoryCache: List<com.ditrain.app.model.SessionLog>? = null
+
+    private fun lastTopWeightKg(exerciseId: String): Double? {
+        val logs = sessionHistoryCacheOrLoad()
+        return logs
+            .sortedByDescending { it.performedDate }
+            .flatMap { it.executed }
+            .firstOrNull { it.exerciseId == exerciseId && !it.skipped && it.sets.isNotEmpty() }
+            ?.sets
+            ?.maxOfOrNull { s ->
+                when (s) {
+                    is com.ditrain.app.model.LoggedSet.Straight -> s.weightKg
+                    is com.ditrain.app.model.LoggedSet.MyoRep -> s.weightKg
+                }
+            }
+    }
+
+    private fun latestE1rmKg(exerciseId: String): Double? {
+        val logs = sessionHistoryCacheOrLoad()
+        val candidates = logs
+            .flatMap { it.executed }
+            .filter { it.exerciseId == exerciseId && !it.skipped }
+            .flatMap { it.sets }
+            .mapNotNull { s ->
+                when (s) {
+                    is com.ditrain.app.model.LoggedSet.Straight ->
+                        com.ditrain.app.progression.E1rm.estimate(s.weightKg, s.reps, s.rpe)
+                    is com.ditrain.app.model.LoggedSet.MyoRep ->
+                        com.ditrain.app.progression.E1rm.estimate(s.weightKg, s.activationReps, s.activationRpe)
+                }
+            }
+        return candidates.maxOrNull()
+    }
+
+    private fun sessionHistoryCacheOrLoad(): List<com.ditrain.app.model.SessionLog> {
+        sessionHistoryCache?.let { return it }
+        val logs = kotlinx.coroutines.runBlocking { sessionLogRepo.loadAll() }
+        sessionHistoryCache = logs
+        return logs
     }
 
     // ───────────── Utilities ─────────────
