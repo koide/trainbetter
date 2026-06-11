@@ -12,24 +12,31 @@ import android.widget.TextView
 import com.ditrain.app.model.LoopMode
 import com.ditrain.app.model.Routine
 import com.ditrain.app.ui.ViewStyling
+import com.ditrain.app.util.LocalDateIso
 
 /**
- * Home view for Plan 2. Renders:
- *  - A title bar with the app name and an overflow "⋮" affordance.
- *  - A body that adapts to whether a routine is active: a "No routine yet"
- *    placeholder or a summary of the active routine.
- *
- * Plan 3 replaces the body with "today's session" + Start button. The menu
- * affordance stays.
+ * Home view.
+ *  - No active routine -> Welcome + Import CTA.
+ *  - Active routine, no session today -> Active-routine card with "no session today" note.
+ *  - Active routine, session today not started -> "Start session" button.
+ *  - Active routine, session today in progress -> "Resume session" button.
  */
 class HomeViewController(
     private val context: Context,
     private val dp: (Int) -> Int,
     private val onMenuClick: () -> Unit,
     private val onImportNow: () -> Unit,
+    private val onStartOrResumeSession: () -> Unit,
 ) {
 
-    fun buildView(activeRoutine: Routine?): View = LinearLayout(context).apply {
+    data class TodayCard(
+        val sessionTemplateName: String,
+        val weekLabel: String,
+        val scheduledDate: LocalDateIso,
+        val resuming: Boolean,
+    )
+
+    fun buildView(activeRoutine: Routine?, todayCard: TodayCard?): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(16), dp(16), dp(16))
 
@@ -38,8 +45,10 @@ class HomeViewController(
 
         if (activeRoutine == null) {
             addView(noRoutineCard())
+        } else if (todayCard != null) {
+            addView(todayCardView(activeRoutine, todayCard))
         } else {
-            addView(activeRoutineCard(activeRoutine))
+            addView(activeRoutineRestCard(activeRoutine))
         }
     }
 
@@ -59,15 +68,13 @@ class HomeViewController(
             setTextColor(Color.WHITE)
             setPadding(dp(16), dp(4), dp(16), dp(4))
             isClickable = true
-            isFocusable = true
             setOnClickListener { onMenuClick() }
         })
     }
 
     private fun divider() = View(context).apply {
         layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1)).apply {
-            topMargin = dp(12)
-            bottomMargin = dp(12)
+            topMargin = dp(12); bottomMargin = dp(12)
         }
         setBackgroundColor(Color.parseColor("#334155"))
     }
@@ -76,7 +83,6 @@ class HomeViewController(
         orientation = LinearLayout.VERTICAL
         background = ViewStyling.roundedBackground("#111827", "#334155", dp(2), dp(20).toFloat())
         setPadding(dp(16), dp(16), dp(16), dp(16))
-
         addView(TextView(context).apply {
             text = "Welcome to DiTrain"
             textSize = 20f
@@ -97,11 +103,44 @@ class HomeViewController(
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
     }
 
-    private fun activeRoutineCard(routine: Routine) = LinearLayout(context).apply {
+    private fun todayCardView(routine: Routine, today: TodayCard) = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        background = ViewStyling.roundedBackground("#111827", "#3B82F6", dp(2), dp(20).toFloat())
+        setPadding(dp(16), dp(16), dp(16), dp(16))
+
+        addView(TextView(context).apply {
+            text = "TODAY · ${today.scheduledDate}"
+            textSize = 12f
+            setTextColor(Color.parseColor("#94A3B8"))
+        })
+        addView(TextView(context).apply {
+            text = today.sessionTemplateName
+            textSize = 22f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setPadding(0, dp(2), 0, 0)
+        })
+        addView(TextView(context).apply {
+            text = "${today.weekLabel} · ${routine.name}"
+            textSize = 13f
+            setTextColor(Color.parseColor("#CBD5E1"))
+            setPadding(0, dp(4), 0, dp(14))
+        })
+        val btn = ViewStyling.actionButton(
+            context,
+            if (today.resuming) "Resume session" else "Start session",
+            if (today.resuming) "#F59E0B" else "#2563EB",
+            compact = false, dp = dp,
+            roundedBackground = { f, s, r -> ViewStyling.roundedBackground(f, s, dp(2), r) },
+        )
+        btn.setOnClickListener { onStartOrResumeSession() }
+        addView(btn, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+    }
+
+    private fun activeRoutineRestCard(routine: Routine) = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         background = ViewStyling.roundedBackground("#111827", "#334155", dp(2), dp(20).toFloat())
         setPadding(dp(16), dp(16), dp(16), dp(16))
-
         addView(TextView(context).apply {
             text = "Active routine"
             textSize = 12f
@@ -119,16 +158,10 @@ class HomeViewController(
                     (if (routine.loopMode == LoopMode.REPEAT) "repeats indefinitely" else "runs once")
             textSize = 13f
             setTextColor(Color.parseColor("#CBD5E1"))
-            setPadding(0, dp(4), 0, dp(14))
+            setPadding(0, dp(4), 0, dp(10))
         })
         addView(TextView(context).apply {
-            text = "▸ Coming next: Start workout (logging sets, rest timer, finish session)"
-            textSize = 13f
-            setTextColor(Color.parseColor("#FDE68A"))
-            setPadding(0, 0, 0, dp(6))
-        })
-        addView(TextView(context).apply {
-            text = "For now: tap ⋮ → Routines → View to inspect the routine, or Edit to tweak it."
+            text = "No session scheduled today. Tap ⋮ → Routines for the active routine, or pick another day on the calendar (coming in Plan 5)."
             textSize = 12f
             setTextColor(Color.parseColor("#94A3B8"))
         })
