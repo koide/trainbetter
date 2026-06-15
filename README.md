@@ -4,6 +4,10 @@ A local-first Android strength + cardio training app for experienced trainees.
 
 Mirrors the stack of [DiRead](https://example.invalid/) — AppCompat single-Activity, programmatic Kotlin UI, file-based JSON storage. See `docs/superpowers/specs/2026-05-15-ditrain-v1-design.md` for the full design.
 
+## Setup
+
+For a fresh Windows machine, see [`SETUP.md`](SETUP.md).
+
 ## Build
 
 ```powershell
